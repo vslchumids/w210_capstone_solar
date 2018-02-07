@@ -1,0 +1,135 @@
+---
+title: "ConsumptionEDA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Read in Data
+
+```{r}
+library(ggplot2)
+library(reshape2)
+#setwd('C:/Users/eyang/Desktop')
+consumption_data = read.csv('2012_public_use_data_aug2016.csv')
+
+data_small =consumption_data[consumption_data$NWKER <= 100 & consumption_data$SQFT <= 500000,]
+
+data_small$PBA_NAME <- ifelse(data_small$PBA == 1, 'Vacant', 
+                       ifelse(data_small$PBA == 2, 'Office',
+                       ifelse(data_small$PBA == 4, 'Lab',
+                       ifelse(data_small$PBA == 5, 'Warehouse No Fridge',
+                       ifelse(data_small$PBA == 6, 'Food Sales',
+                       ifelse(data_small$PBA == 7, 'Public Order',
+                       ifelse(data_small$PBA == 8, 'Outpatient',
+                       ifelse(data_small$PBA == 11, 'Warehouse',
+                       ifelse(data_small$PBA == 12, 'Religious',
+                       ifelse(data_small$PBA == 13, 'Public Assembly',
+                       ifelse(data_small$PBA == 14, 'Education',
+                       ifelse(data_small$PBA == 15, 'Food Service',
+                       ifelse(data_small$PBA == 16, 'Inpatient',
+                       ifelse(data_small$PBA == 17, 'Nursing',
+                       ifelse(data_small$PBA == 18, 'Lodging',
+                       ifelse(data_small$PBA == 23, 'Strip Mall',
+                       ifelse(data_small$PBA == 24, 'Enclosed Mall',
+                       ifelse(data_small$PBA == 25, 'Retail',
+                       ifelse(data_small$PBA == 26, 'Service','Other')))))))))))))))))))
+
+data_small$GEO  <-  ifelse(data_small$CENDIV == 1, 'New England',
+                       ifelse(data_small$CENDIV == 2, 'Middle Atlantic',
+                       ifelse(data_small$CENDIV == 3, 'East North Central',
+                       ifelse(data_small$CENDIV == 4, 'West North Central',
+                       ifelse(data_small$CENDIV == 5, 'South Atlantic',
+                       ifelse(data_small$CENDIV == 6, 'East South Central',  
+                       ifelse(data_small$CENDIV == 7, 'West South Central',
+                       ifelse(data_small$CENDIV == 8, 'Mountain',
+                       ifelse(data_small$CENDIV == 9, 'Pacific','')))))))))
+
+data_small$HRS24 <- ifelse(data_small$OPEN24 == 1, 1,0)
+
+length(data_small$PUBID)
+
+head(data_small$PBA_NAME)
+```
+
+#check fields
+```{r}
+head(data_small)
+summary(data_small$PBA)
+```
+
+#EDA
+```{r}
+hist(log(data_small$ELCNS), main="Log Commercial Electricity Consumption 2012")
+```
+There are some big outliers in the dataset in terms of annual electricity usage
+
+```{r}
+ggplot(data_small, aes(x=REGION, y=log(ELCNS), group=REGION)) + geom_boxplot()+
+ylab("")+xlab("Region")+ggtitle("Boxplot of Annual Electricity Consumption by Region")
+```
+Not a huge difference in the distribution.  Northeast highest median, west is the lowest median
+
+```{r}
+ggplot(data_small, aes(x=CENDIV, y=log(ELCNS), group=CENDIV)) + geom_boxplot()+
+ylab("")+xlab("Census Division")+ggtitle("Boxplot of Annual Electricity Consumption by Census Division")
+```
+A little more variation when we cut by census division
+
+```{r}
+ggplot(data_small, aes(x=log(SQFT), y=log(ELCNS)))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("SQFT vs. Annual Electricity Usage")
+```
+A little more variation when we cut by census division
+
+```{r}
+table(data_small$SQFTC)
+```
+The dataset has nothing under 1000 sqft
+
+```{r}
+data.frame(table(data_small$PBA_NAME))
+```
+Sample by Business Type
+
+```{r}
+ggplot(data_small, aes(x=PBA_NAME, y=log(ELCNS), group=PBA_NAME)) + geom_boxplot()+
+ylab("")+xlab("Primary Business Activity")+ggtitle("Boxplot of Annual Electricity Consumption by Primary Business Activity")+ theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+
+```{r}
+ggplot(data_small, aes(x=log(NWKER), y=log(ELCNS)))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("Number of Workers vs. Annual Electricity Usage")
+```
+
+
+
+```{r}
+data_yr = data_small[data_small$YRCON != 995,]
+ggplot(data_yr, aes(x=YRCON, y=log(ELCNS)))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("Year Constructed vs. Annual Electricity Usage")
+```
+
+
+```{r}
+options(warn=-1)
+ggp <- ggplot(data_small, aes(x=SQFT, y=ELCNS,
+                                     color=PBA_NAME))
+
+ggp + geom_point(aes(color=PBA_NAME))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Annual Electricity Usage")+
+  xlab("Sqft")+
+  ggtitle("Annual Electricity Usage by Business type squarefootage")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+
+```{r}
+consump_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + PBA_NAME + GEO, data = data_small)
+
+summary(consump_fit)
+```
