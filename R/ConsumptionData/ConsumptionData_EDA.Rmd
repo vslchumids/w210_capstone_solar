@@ -12,12 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(ggplot2)
 library(reshape2)
+library(car)
+require(dplyr)
+library(Hmisc)
 #setwd('C:/Users/eyang/Desktop')
 consumption_data = read.csv('2012_public_use_data_aug2016.csv')
 
-data_small =consumption_data[consumption_data$NWKER <= 100 & consumption_data$SQFT <= 500000,]
+data_small =consumption_data[consumption_data$NWKER <= 200 & consumption_data$SQFT <= 500000 & consumption_data$FREESTN == 1 & consumption_data$ONEACT == 1,]
 
-data_small$PBA_NAME <- ifelse(data_small$PBA == 1, 'Vacant', 
+data_small$PBA_NAME <- as.factor(ifelse(data_small$PBA == 1, 'Vacant', 
                        ifelse(data_small$PBA == 2, 'Office',
                        ifelse(data_small$PBA == 4, 'Lab',
                        ifelse(data_small$PBA == 5, 'Warehouse No Fridge',
@@ -35,9 +38,9 @@ data_small$PBA_NAME <- ifelse(data_small$PBA == 1, 'Vacant',
                        ifelse(data_small$PBA == 23, 'Strip Mall',
                        ifelse(data_small$PBA == 24, 'Enclosed Mall',
                        ifelse(data_small$PBA == 25, 'Retail',
-                       ifelse(data_small$PBA == 26, 'Service','Other')))))))))))))))))))
+                       ifelse(data_small$PBA == 26, 'Service','Other'))))))))))))))))))))
 
-data_small$GEO  <-  ifelse(data_small$CENDIV == 1, 'New England',
+data_small$GEO  <-  as.factor(ifelse(data_small$CENDIV == 1, 'New England',
                        ifelse(data_small$CENDIV == 2, 'Middle Atlantic',
                        ifelse(data_small$CENDIV == 3, 'East North Central',
                        ifelse(data_small$CENDIV == 4, 'West North Central',
@@ -45,14 +48,41 @@ data_small$GEO  <-  ifelse(data_small$CENDIV == 1, 'New England',
                        ifelse(data_small$CENDIV == 6, 'East South Central',  
                        ifelse(data_small$CENDIV == 7, 'West South Central',
                        ifelse(data_small$CENDIV == 8, 'Mountain',
-                       ifelse(data_small$CENDIV == 9, 'Pacific','')))))))))
+                       ifelse(data_small$CENDIV == 9, 'Pacific',''))))))))))
 
-data_small$HRS24 <- ifelse(data_small$OPEN24 == 1, 1,0)
+data_small$HRS24 = ifelse(data_small$OPEN24 == 1, 1,0)
+data_small$OPNWE = ifelse(data_small$OPNWE == 1, 1, 0)
+data_small$ELHT1 = ifelse(data_small$ELHT1 == 1, 1, 0)
+data_small$EMCS = ifelse(data_small$EMCS == 1, 1, 0)
+data_small$ELWATR = ifelse(data_small$ELWATR == 1, 1, 0)
+data_small$ELCOOK = ifelse(data_small$ELCOOK == 1, 1, 0)
+data_small$ELMANU = ifelse(data_small$ELMANU == 1, 1, 0)
+data_small$KITCHN= ifelse(data_small$KITCHN == 1, 1, 0)
+data_small$RFGEQP= ifelse(data_small$RFGEQP == 1, 1, 0)
+data_small$PCTERM= ifelse(data_small$PCTERM== 1, 1, 0)
+data_small$SERVER= ifelse(data_small$SERVER== 1, 1, 0)
+data_small$TVVIDEO= ifelse(data_small$TVVIDEO== 1, 1, 0)
+data_small$COPIER= ifelse(data_small$COPIER== 1, 1, 0)
+data_small$OCSN = ifelse(data_small$OCSN== 1, 1, 0)
+
+data_small$NELVTR[is.na(data_small$NELVTR)] = 0
+data_small$NESLTR[is.na(data_small$NESLTR)] = 0
 
 length(data_small$PUBID)
 
 head(data_small$PBA_NAME)
+
+#describe(data_small)
+
 ```
+#(NELVTR, NESLTR, WKHRS, OPEN24, ELHT1,OPNWE, ELCOOL, EMCS, ELWATR, ELCOOK, ELMANU, RFGEQP, PCTERM, PCTERMN, SERVER, SERVERN, TVVIDEO, TVVIDEON, COPIER, COPIERM, LTOHRP,OCSN, WINTYP)
+
+#Specific to Office
+KITCHN
+
+#Specific to Med
+XRAYN, CTSCAN, MRI, OUTSURG, LABEQP
+
 
 #check fields
 ```{r}
@@ -129,7 +159,7 @@ ggp + geom_point(aes(color=PBA_NAME))+
 
 
 ```{r}
-consump_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + PBA_NAME + GEO, data = data_small)
-
+#Combined Model
+consump_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + relevel(PBA_NAME, ref = 'Vacant') + relevel(GEO, ref = 'Pacific'), data = data_small)
 summary(consump_fit)
 ```
