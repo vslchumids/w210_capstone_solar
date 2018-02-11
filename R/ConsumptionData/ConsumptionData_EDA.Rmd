@@ -18,7 +18,7 @@ library(Hmisc)
 #setwd('C:/Users/eyang/Desktop')
 consumption_data = read.csv('2012_public_use_data_aug2016.csv')
 
-data_small =consumption_data[consumption_data$NWKER <= 200 & consumption_data$SQFT <= 500000 & consumption_data$FREESTN == 1 & consumption_data$ONEACT == 1,]
+data_small =subset(consumption_data, NWKER <= 200 & SQFT <= 500000 & FREESTN == 1 & ONEACT == 1)
 
 data_small$PBA_NAME <- as.factor(ifelse(data_small$PBA == 1, 'Vacant', 
                        ifelse(data_small$PBA == 2, 'Office',
@@ -72,7 +72,7 @@ length(data_small$PUBID)
 
 head(data_small$PBA_NAME)
 
-#describe(data_small)
+table(data_small$PBA_NAME)
 
 ```
 #(NELVTR, NESLTR, WKHRS, OPEN24, ELHT1,OPNWE, ELCOOL, EMCS, ELWATR, ELCOOK, ELMANU, RFGEQP, PCTERM, PCTERMN, SERVER, SERVERN, TVVIDEO, TVVIDEON, COPIER, COPIERM, LTOHRP,OCSN, WINTYP)
@@ -162,4 +162,24 @@ ggp + geom_point(aes(color=PBA_NAME))+
 #Combined Model
 consump_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + relevel(PBA_NAME, ref = 'Vacant') + relevel(GEO, ref = 'Pacific'), data = data_small)
 summary(consump_fit)
+```
+#(NELVTR, NESLTR, WKHRS, OPEN24, ELHT1,OPNWE, ELCOOL, EMCS, ELWATR, ELCOOK, ELMANU, RFGEQP, PCTERM, PCTERMN, SERVER, SERVERN, TVVIDEO, TVVIDEON, COPIER, COPIERM, LTOHRP,OCSN, WINTYP)
+```{r}
+#Food Sales Model
+data_food_sales =subset(data_small, PBA_NAME == 'Food Sales')
+length(data_food_sales$PUBID)
+
+food_sales_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + OPEN24 + NELVTR + NESLTR + OPNWE + ELHT1 + ELCOOL + ELWATR + ELCOOK + ELMANU + RFGEQP, data = data_food_sales)
+
+summary(food_sales_fit)
+```
+
+```{r}
+#Office Model
+data_office =subset(data_small, PBA_NAME == 'Warehouse No Fridge')
+length(data_office$PUBID)
+
+office_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + OPEN24 + NELVTR + NESLTR + OPNWE, data = data_office)
+
+summary(office_fit)
 ```
