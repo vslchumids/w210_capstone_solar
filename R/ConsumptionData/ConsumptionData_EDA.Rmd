@@ -173,13 +173,24 @@ food_sales_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + OPEN24 + NEL
 
 summary(food_sales_fit)
 ```
+```{r}
+#Warehouse Model
+data_warehouse =subset(data_small, PBA_NAME == 'Warehouse No Fridge')
+length(data_warehouse$PUBID)
+
+warehouse_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + OPEN24 + NELVTR + NESLTR + OPNWE + ELHT1 + ELCOOL + ELWATR + ELCOOK + ELMANU + RFGEQP, data = data_warehouse)
+
+summary(warehouse_fit)
+```
+
+
 
 ```{r}
 #Office Model
-data_office =subset(data_small, PBA_NAME == 'Warehouse No Fridge')
+data_office =subset(data_small, PBA_NAME == 'Strip Mall')
 length(data_office$PUBID)
 
-office_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + OPEN24 + NELVTR + NESLTR + OPNWE, data = data_office)
+office_fit = lm(ELCNS ~ SQFT + YRCON + NWKER + GLSSPC + WKHRS + OPEN24 + NELVTR + NESLTR + OPNWE + ELHT1 + ELCOOL + ELWATR + ELCOOK + ELMANU + RFGEQP, data = data_office)
 
 summary(office_fit)
 ```
