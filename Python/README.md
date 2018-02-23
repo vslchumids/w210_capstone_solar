@@ -15,9 +15,11 @@
 ## Scripts
 
 * To download CA weather station data and untar
+
 				* >> python get_data.py -c NSRDB_CA_StationsMeta.csv 
 
 * To create a feature table based on CA weather station for clustering analysis
+
 				* >> python build_yearly_features.py -i NSRDB_CA_StationsMeta.csv -o feature_table.csv
 
 Note: The yearly feature is based on 2005 data and aggregated use average
