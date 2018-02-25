@@ -23,3 +23,11 @@
 				 >> python build_yearly_features.py -i NSRDB_CA_StationsMeta.csv -o feature_table.csv
 
 Note: The yearly feature is based on 2005 data and aggregated use average
+
+* To run SARIMA model grid search on 1 weather station weekly time series
+
+				>> python -i weather_station_data.csv -c config_sarima.ini -m bic
+
+You can modify config_sarima.ini file to define grid search range. Metric can be aic or bic.
+
+Note: From test so far, the series do not have AR or MA degree higher than 2. Remember the laws of parsimounious
