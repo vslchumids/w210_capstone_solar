@@ -26,7 +26,7 @@ Note: The yearly feature is based on 2005 data and aggregated use average
 
 * To run SARIMA model grid search on 1 weather station weekly time series
 
-				>> python -i weather_station_data.csv -c config_sarima.ini -m bic
+				>> python sarima_model_gridsearch.py -i weather_station_data.csv -c config_sarima.ini -m bic
 
 You can modify config_sarima.ini file to define grid search range. Metric can be aic or bic.
 
