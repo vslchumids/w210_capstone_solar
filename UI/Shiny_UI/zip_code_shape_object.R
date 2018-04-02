@@ -11,8 +11,9 @@ data("zip_codes")
 zip_codes[zip_codes$state == 'CA',]
 
 
+
 downloaddir<-getwd()
-#setwd('C:/Users/eyang/Desktop/Shiny_PC')
+#downloaddir<-setwd('/Users/ericyang/documents/github/w210_capstone_solar/UI/Shiny_UI')
 dat<-readOGR(downloaddir, "cb_2016_us_zcta510_500k")
 
 #Remove this when we can just use non_census
