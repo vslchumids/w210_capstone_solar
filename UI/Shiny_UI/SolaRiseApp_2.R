@@ -112,15 +112,16 @@ server <- function(input,output, session){
     leaflet() %>%
       addTiles() %>%
       addPolygons(data= if (input$go==0) {subdat} else {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]}, 
-                  fillColor = ~pal(subdat$Density),
-                  fillOpacity = 0.45,
-                  weight = .5, 
+                  fillColor =if (input$go==0) {~pal(subdat$Density)} else {'blue'},
+                  fillOpacity =if (input$go==0) {0.45} else {0.00009},
+                  weight = if (input$go==0) {0.45} else {0.10}, 
                   highlightOptions = highlightOptions(color = "red", weight = 2,bringToFront = TRUE),
                   label = labels,
                   labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"),textsize = "15px",direction = "auto")) %>% 
       setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=13}) %>% 
-      addCircleMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}, color = 'red',
-                       if(input$go==0) {opacity = 0} else {opacity = 1}, radius = 50)
+      addMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]})
+      #addCircleMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}, color = 'red',
+                       #if(input$go==0) {opacity = 0} else {opacity = 1}, radius = 50)
       
   })
   
