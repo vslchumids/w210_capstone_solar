@@ -1,0 +1,1 @@
+for (i in list.files('/Users/ericyang/documents/github/w210_capstone_solar/ui/shiny_ui')) {print(i)}
