@@ -6,6 +6,7 @@ library(noncensus)
 library(shiny)
 library(ggplot2)
 library(ggmap)
+library(geosphere)
 library(data.table)
 library(xts)
 library(shinythemes)
@@ -141,10 +142,12 @@ ui <- fluidPage("",
                tabPanel("Solar Energy Projection",
                         h2("Solar Energy Annual Trend", align = 'center'),
                         fluidRow(
-                          column(6, 
-                                 plotOutput("SPI_monthly", height = 250)),  
-                          column(6, 
-                                 plotOutput("SPI_weekly", height = 250))
+                          column(12, 
+                                 plotOutput("SPI_monthly", height = 400))),  
+                        fluidRow(column(12, div(style = "height:100px;"))),
+                        fluidRow(
+                          column(12, 
+                                 plotOutput("SPI_weekly", height = 400))
                           )
                         ),
       
@@ -152,6 +155,10 @@ ui <- fluidPage("",
                         h2("Personalized Reporting", align = 'center'),
                         fluidRow(
                           column(12, htmlOutput("BusinessAttri"))
+                          ),
+                        fluidRow(column(12, div(style = "height:100px;"))),
+                        fluidRow(
+                          column(12, img(src='SolarROI.jpg', height = 400))
                           )
                         )
                ),
@@ -230,28 +237,32 @@ server <- function(input,output, session){
   #-----Consumption Graphs
   
   output$SPI_monthly = renderPlot({
-    par(bg = '#2FA4E7')
+    #par(bg = '#2FA4E7')
     barplot(monthly_avg(nearest_station(stations, points())[2]), 
-            names.arg = c(months(index(monthly))), 
+            names.arg = c(months(index(monthly_avg(nearest_station(stations, points())[2])))), 
             main = 'Monthly Average SPI Est',
             ylab = 'Monthly Avg SPI',
             xlab = 'Month', 
             cex.main = 0.8,
             cex.lab = 0.8,
             cex.axis = 0.8,
+            ylim = c(0.0, 1.05),
+            beside = TRUE,
             col = c('firebrick', 'darkorange', 'darkolivegreen2'))
     legend("topright", c("Worst", "Average", "Best"), fill = c('darkolivegreen2', 'darkorange', 'firebrick'))
   })
   output$SPI_weekly = renderPlot({
-    par(bg = '#2FA4E7')
+    #par(bg = '#2FA4E7')
     barplot(weekly_avg(nearest_station(stations, points())[2]), 
-            names.arg = c(week(index(weekly))), 
+            names.arg = c(week(index(weekly_avg(nearest_station(stations, points())[2])))), 
             main = 'Weekly Average SPI Est',
             ylab = 'Weekly Avg SPI',
             xlab = 'Week of the Year', 
             cex.main = 0.8,
             cex.lab = 0.8,
             cex.axis = 0.8,
+            ylim = c(0.0, 1.05),
+            beside = TRUE,
             col = c('firebrick', 'darkorange', 'darkolivegreen2'))
     legend("topright", c("Worst", "Average", "Best"), fill = c('darkolivegreen2', 'firebrick', 'darkorange'))
   })
@@ -289,7 +300,6 @@ server <- function(input,output, session){
   })
 
   }
-
 
 
 shinyApp(ui=ui, server=server)
