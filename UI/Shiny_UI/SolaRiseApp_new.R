@@ -123,19 +123,40 @@ ui <- fluidPage("",
                                                                      c("Office" = "ofc", 
                                                                        "Warehouse" = "war", 
                                                                        "Restuarant" = "rest",
-                                                                       "Laboratory" = "lab")),
-                                 sliderInput(inputId='empl_slide', label = '# Employees', value = 25, min=10, max = 100),
-                                 sliderInput(inputId='sqft_slide', label = 'Square feet', value = 5000, min=250, max = 10000),
-                                 sliderInput(inputId='hrs_slide', label = 'Weekly Operation Hours', value = 40, min=1, max = 168),
-                                  
-                                 checkboxGroupInput(inputId='consump_check', label = 'Check All That Apply', 
+                                                                       "Laboratory" = "lab",
+                                                                       "Convenience Store" = "conv",
+                                                                       "Religious Worship" = "reli", 
+                                                                       "Outpatient Health" = "out_health",
+                                                                       "Inpatient Health" = "in_health",
+                                                                       "Education" = "edu",
+                                                                       "Nursing Home" = "nurse",
+                                                                       "Lodging" = "lodge",
+                                                                       "Strip Mall" = "strip",
+                                                                       "Enclosed Mall" = "enc_mall",
+                                                                       "Retail Other" = "ret_oth",
+                                                                       "Service" = "service",
+                                                                       "Other" = "oth"
+                                                                       )),
+                                 column(6,sliderInput(inputId='empl_slide', label = '# Employees', value = 25, min=10, max = 100)),
+                                 column(6,sliderInput(inputId='sqft_slide', label = 'Square feet', value = 5000, min=250, max = 10000)),
+                                 column(6,sliderInput(inputId='weekday_start', label = 'Weekday Start Hour', value = 8, min=0, max = 23)),
+                                 column(6,sliderInput(inputId='weekday_total', label = 'Weekday Daily Hours', value = 10, min=0, max = 24)),
+                                 column(6,sliderInput(inputId='weekend_start', label = 'Weekend Start Hour', value = 10, min=0, max = 23)),
+                                 column(6,sliderInput(inputId='weekend_total', label = 'Weekend Daily Hours', value = 12, min=0, max = 24)),                                  
+                                 column(6,checkboxGroupInput(inputId='consump_check', label = 'Check All That Apply', 
                                                                              choices = c('Open 24' = 'Open 24',
                                                                                          'Electric Heat' = 'Electric Heat',
-                                                                                         'Electric Cool' = 'Electric Cool',
-                                                                                         'Electic Manufacture' = 'Electric Manufacture')),
-                                  h4("Expected Payback Period", align = 'center'),
-                                  numericInput(inputId = 'payback', label = 'Years', value = 5, min = 5, max = 30),
-                                  actionButton("go", "Go SolarRise"))),
+                                                                                         'Electric Cool' = 'Electric Cool'))),
+                                 column(6,checkboxGroupInput(inputId='consump_check_2', label = NULL, 
+                                                             choices = c('Open Weekend' = 'Open Wkd',
+                                                                         'Electric Cook' = 'Electric Cook',
+                                                                         'Refridgeration' = 'Refridgeration',
+                                                                         'Electic Manufacture' = 'Electric Manufacture'))),
+                                  column(12,h4("Expected Payback Period", align = 'center')),
+                                  column(12,numericInput(inputId = 'payback', label = 'Years', value = 5, min = 1, max = 10)),
+                                  actionButton("go", "Find Address"),
+                                  actionButton("detail", "Detailed Report")
+                                 )),
                       column(8, leafletOutput("map", height = 850))
                       ),
              navbarMenu("Detailed Report",
@@ -168,69 +189,55 @@ ui <- fluidPage("",
 
 server <- function(input,output, session){
   
-  # downloaddir<-getwd()
-  # #setwd('C:/Users/eyang/Desktop/Shiny_PC')
-  # zip_codes = read.csv('ca_zips.csv') 
-  # dat<-readOGR(downloaddir, "cb_2016_us_zcta510_500k") 
-  # 
-  # subdat<-dat[dat$GEOID10 %in% zip_codes$GEOID10,]
-  # 
-  # # ----- Transform to EPSG 4326 - WGS84 (required)
-  # #subdat<-spTransform(subdat, CRS("+init=epsg:4326"))
-  # proj4string(subdat) <- CRS("+init=epsg:4326")
-  # 
-  # # ----- save the data slot
-  # subdat_data<-subdat@data[,c("GEOID10", "ALAND10")]
-  # 
-  # # ----- simplification yields a SpatialPolygons class
-  # subdat<-gSimplify(subdat,tol=0.01, topologyPreserve=TRUE)
-  # 
-  # # ----- to write to geojson we need a SpatialPolygonsDataFrame
-  # subdat<-SpatialPolygonsDataFrame(subdat, data=subdat_data)
-  # 
-  # #-----merge in density data
-  # subdat <- merge(x = subdat, y = zip_codes, by = "GEOID10", all.x = TRUE)
   subdat <- readRDS("subdat.rds")
   
   labels <- sprintf(
-    "<strong>%s",
-    subdat$GEOID10
+    "<strong>%s</strong><br/>Zip: %g<br/>SPI: %g",
+    subdat$City, subdat$GEOID10, round(subdat$Density, 2)
   ) %>% lapply(htmltools::HTML)
   
-  
   #------Setup Density Buckets
-  bins <- c(0.001, .01, .02, .05, .1, .2, .5, 1, Inf)
-  pal <- colorBin("Blues", domain = subdat$Density, bins = bins)
+  bins <- c(0.40, 0.43, 0.46, 0.48, 0.51, 0.54, 0.57, 0.59, 0.62)
+  pal <- colorBin("YlOrRd", domain = subdat$Density, bins = bins)
   
   #----Setup Temp Datasets
-  df <- data.frame(estimate=rep(c("consumption", "generation"), each=5),
-                   year=rep(c(2018,2019,2020,2021,2022),2),
-                   kw=c(30,30,35,35,40,30,30,40,30,35),
-                   savings=c(2,3,5,-2,5,0,0,0,0,0))
+  #df <- data.frame(estimate=rep(c("consumption", "generation"), each=5),
+                   #year=rep(c(2018,2019,2020,2021,2022),2),
+                   #kw=c(30,30,35,35,40,30,30,40,30,35),
+                   #savings=c(2,3,5,-2,5,0,0,0,0,0))
 
   #-----Map Search
   points <- eventReactive(input$go, {geocode(input$Address, output='latlon', source = "dsk")})
+  
+  labels_react <- eventReactive(input$go, {
+    sprintf(
+      "<strong>%s</strong><br/>Zip: %g<br/>SPI: %g",
+      subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$City,
+      subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$GEOID10,
+      subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$Density
+    ) %>% lapply(htmltools::HTML)
+  })
   
   #-------Map Visualization
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
       addPolygons(data= if (input$go==0) {subdat} else {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]}, 
-                  fillColor =if (input$go==0) {~pal(subdat$Density)} else {'blue'},
-                  fillOpacity =if (input$go==0) {0.45} else {0.00009},
+                  fillColor =if (input$go==0) {~pal(subdat$Density)} else {~pal(subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$Density)},
+                  fillOpacity =if (input$go==0) {0.45} else {0.00045},
                   weight = .5, 
-                  highlightOptions = highlightOptions(color = "red", weight = 2,bringToFront = TRUE),
-                  label = labels,
+                  highlightOptions = highlightOptions(color = "green", weight = 2,bringToFront = TRUE),
+                  label = if (input$go==0) {labels} else {labels},
                   labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"),textsize = "15px",direction = "auto")) %>% 
 #<<<<<<< HEAD
-      setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=14}) %>% 
+      setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=11}) %>% 
 #=======
-      setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=13}) %>% 
+      #setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=10}) %>% 
 #>>>>>>> 9f665df4fb6f42934239666abfc3992c9f2afbff
       addMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}) %>% 
       #addCircleMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}, color = 'red',
                        #if(input$go==0) {opacity = 0} else {opacity = 1}, radius = 50)
-      leaflet::addLegend(pal=pal,value = subdat$Density, opacity = 0.7, title = NULL, position = "bottomleft")
+      leaflet::addLegend(pal=pal,value = subdat$Density, opacity = 0.7, title = "Mean SPI", position = "topright")
       
   })
   

@@ -17,7 +17,7 @@ stations <- read.csv('selected_stations.csv')
 #Buildup Station Forecast Summry
 for (i in list.files()) 
 {if (grepl('forecast',i)) {curr_csv = read.csv(i)} 
-  if (grepl('forecast',i)) {forecast.df <- rbind(forecast.df,data.frame(station = substr(i,1,6), Density = sum(curr_csv$yhat)))}}
+  if (grepl('forecast',i)) {forecast.df <- rbind(forecast.df,data.frame(station = substr(i,1,6), Density = mean(curr_csv$yhat)))}}
 
 #Function to Determine Nearest Station
 nearest_station <- function(data_station, location) {
@@ -65,4 +65,7 @@ subdat <- merge(x = subdat, y = zip_codes, by = "GEOID10", all.x = TRUE)
 
 saveRDS(subdat, "subdat.rds")
 
-head(subdat)
+
+
+
+
