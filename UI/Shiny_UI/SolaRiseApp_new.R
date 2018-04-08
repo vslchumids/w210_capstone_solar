@@ -118,6 +118,7 @@ ui <- fluidPage("",
                                   textInput(inputId = "Address", label = NULL, width = '100%',
                                                 value = "e.g. 301 Old San Francisco Rd, Sunnyvale, CA 94086"),
                                   actionButton("go", "Find Address"),
+                                  HTML('<hr style="color: grey;">'),
                                   
                                   h4("Consumption Inputs", align = 'center'),
                                   selectInput("biz_select", "Select Business Type:", 
@@ -157,7 +158,7 @@ ui <- fluidPage("",
                                   column(12,numericInput(inputId = 'payback', label = 'Years', value = 5, min = 1, max = 10)),
                                   actionButton("detail", "Detailed Report")
                                  )),
-                      column(8, leafletOutput("map", height = 850))
+                      column(8, leafletOutput("map", height = 900))
                       ),
              tabPanel(title = "Detailed Report",
                         h2("Solar Energy Annual Trend", align = 'center'),
