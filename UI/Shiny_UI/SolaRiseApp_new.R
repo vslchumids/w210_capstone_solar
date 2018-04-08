@@ -206,14 +206,13 @@ server <- function(input,output, session){
   #-----Map Search
   points <- eventReactive(input$go, {geocode(input$Address, output='latlon', source = "dsk")})
   
-  labels_react <- eventReactive(input$go, {
-    sprintf(
-      "<strong>%s</strong><br/>Zip: %g<br/>SPI: %g",
-      subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$City,
-      subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$GEOID10,
-      subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$Density
-    ) %>% lapply(htmltools::HTML)
-  })
+  rev.zip <- eventReactive(input$go, {as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
+                                                                          geocode(input$Address, output='latlon', source = "dsk")$lat),
+                                                                        output = 'more')$postal_code))})
+  
+  labels_react <- eventReactive(input$go, {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
+                                                                                                         geocode(input$Address, output='latlon', source = "dsk")$lat),
+                                                                                                       output = 'more')$postal_code)),]$Density})
   
   observeEvent(input$detail, {
     updateNavbarPage(session = session, inputId='nav', selected = 'Detailed Report')
@@ -223,13 +222,13 @@ server <- function(input,output, session){
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
-      addPolygons(data= if (input$go==0) {subdat} else {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]}, 
-                  fillColor =if (input$go==0) {~pal(subdat$Density)} else {~pal(subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$Density)},
+      addPolygons(label = if (input$go==0) {labels} else {labels},
+                  data= if (input$go==0) {subdat} else {subdat[subdat$GEOID10 == rev.zip(),]}, 
+                  fillColor =if (input$go==0) {~pal(subdat$Density)} else {~pal(subdat[subdat$GEOID10 == rev.zip(),]$Density)},
                   fillOpacity =if (input$go==0) {0.45} else {0.00045},
                   weight = .5, 
                   highlightOptions = highlightOptions(color = "green", weight = 2,bringToFront = TRUE),
-                  label = if (input$go==0) {labels} else {labels},
-                  labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"),textsize = "15px",direction = "auto")) %>% 
+                  labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"),textsize = "15px",direction = "auto")) %>%
 #<<<<<<< HEAD
       setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=11}) %>% 
 #=======
