@@ -75,7 +75,7 @@ ui <- fluidPage("",
   navbarPage(title = '', 
              id="nav",
              #theme = 'agency.css',
-             tabPanel("About Us",
+             tabPanel(title = "About Us",
                       fluidRow(
                         column(4, img(src='solar_pic1.jpg', height = 200, width = 300, 
                                       top = 20, bottom = 20, align = "right")), 
@@ -117,6 +117,7 @@ ui <- fluidPage("",
                                   h4("Enter Your Location", align = 'center'),
                                   textInput(inputId = "Address", label = NULL, width = '100%',
                                                 value = "e.g. 301 Old San Francisco Rd, Sunnyvale, CA 94086"),
+                                  actionButton("go", "Find Address"),
                                   
                                   h4("Consumption Inputs", align = 'center'),
                                   selectInput("biz_select", "Select Business Type:", 
@@ -154,13 +155,11 @@ ui <- fluidPage("",
                                                                          'Electic Manufacture' = 'Electric Manufacture'))),
                                   column(12,h4("Expected Payback Period", align = 'center')),
                                   column(12,numericInput(inputId = 'payback', label = 'Years', value = 5, min = 1, max = 10)),
-                                  actionButton("go", "Find Address"),
                                   actionButton("detail", "Detailed Report")
                                  )),
                       column(8, leafletOutput("map", height = 850))
                       ),
-             navbarMenu("Detailed Report",
-               tabPanel("Solar Energy Projection",
+             tabPanel(title = "Detailed Report",
                         h2("Solar Energy Annual Trend", align = 'center'),
                         fluidRow(
                           column(12, 
@@ -169,10 +168,8 @@ ui <- fluidPage("",
                         fluidRow(
                           column(12, 
                                  plotOutput("SPI_weekly", height = 400))
-                          )
                         ),
-      
-               tabPanel("Business Report",
+                        fluidRow(column(12, div(style = "height:100px;"))),
                         h2("Personalized Reporting", align = 'center'),
                         fluidRow(
                           column(12, htmlOutput("BusinessAttri"))
@@ -180,7 +177,6 @@ ui <- fluidPage("",
                         fluidRow(column(12, div(style = "height:100px;"))),
                         fluidRow(
                           column(12, img(src='SolarROI.jpg', height = 400))
-                          )
                         )
                ),
              tabPanel("Our Team") 
@@ -216,6 +212,10 @@ server <- function(input,output, session){
       subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$GEOID10,
       subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(points()$lon,points()$lat), output = 'more')$postal_code)),]$Density
     ) %>% lapply(htmltools::HTML)
+  })
+  
+  observeEvent(input$detail, {
+    updateNavbarPage(session = session, inputId='nav', selected = 'Detailed Report')
   })
   
   #-------Map Visualization
