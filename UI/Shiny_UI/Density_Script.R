@@ -65,7 +65,3 @@ subdat <- merge(x = subdat, y = zip_codes, by = "GEOID10", all.x = TRUE)
 
 saveRDS(subdat, "subdat.rds")
 
-
-
-
-

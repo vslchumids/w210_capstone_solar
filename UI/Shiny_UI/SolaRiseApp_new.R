@@ -158,7 +158,11 @@ ui <- fluidPage("",
                                   column(12,numericInput(inputId = 'payback', label = 'Years', value = 5, min = 1, max = 10)),
                                   actionButton("detail", "Detailed Report")
                                  )),
-                      column(8, leafletOutput("map", height = 900))
+                      column(8, leafletOutput("map", height = 900),
+                             absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
+                                           draggable = FALSE, top = "auto", left = "auto", right = 50, bottom = 40,
+                                           width = 200, height = "auto",
+                                           plotOutput("spi.hist", height = 250)))
                       ),
              tabPanel(title = "Detailed Report",
                         h2("Solar Energy Annual Trend", align = 'center'),
@@ -196,12 +200,6 @@ server <- function(input,output, session){
   #------Setup Density Buckets
   bins <- c(0.40, 0.43, 0.46, 0.48, 0.51, 0.54, 0.57, 0.59, 0.62)
   pal <- colorBin("YlOrRd", domain = subdat$Density, bins = bins)
-  
-  #----Setup Temp Datasets
-  #df <- data.frame(estimate=rep(c("consumption", "generation"), each=5),
-                   #year=rep(c(2018,2019,2020,2021,2022),2),
-                   #kw=c(30,30,35,35,40,30,30,40,30,35),
-                   #savings=c(2,3,5,-2,5,0,0,0,0,0))
 
   #-----Map Search
   points <- eventReactive(input$go, {geocode(input$Address, output='latlon', source = "dsk")})
@@ -210,7 +208,7 @@ server <- function(input,output, session){
                                                                           geocode(input$Address, output='latlon', source = "dsk")$lat),
                                                                         output = 'more')$postal_code))})
   
-  labels_react <- eventReactive(input$go, {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
+  zip.spi <- eventReactive(input$go, {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
                                                                                                          geocode(input$Address, output='latlon', source = "dsk")$lat),
                                                                                                        output = 'more')$postal_code)),]$Density})
   
@@ -230,7 +228,7 @@ server <- function(input,output, session){
                   highlightOptions = highlightOptions(color = "green", weight = 2,bringToFront = TRUE),
                   labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"),textsize = "15px",direction = "auto")) %>%
 #<<<<<<< HEAD
-      setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=11}) %>% 
+      setView(if(input$go==0) {lng = -116.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=11}) %>% 
 #=======
       #setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=10}) %>% 
 #>>>>>>> 9f665df4fb6f42934239666abfc3992c9f2afbff
@@ -274,14 +272,15 @@ server <- function(input,output, session){
     legend("topright", c("Worst", "Average", "Best"), fill = c('darkolivegreen2', 'firebrick', 'darkorange'))
   })
   
-  output$linetemp <- renderPlot({ggplot(data=df, aes(x=year, y=kw, group=estimate)) +
-      geom_line(aes(color=estimate))+
-      geom_point(aes(color=estimate))+ 
-      theme(legend.position="bottom") +
-      scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9"))})
   
-  output$bartemp <- renderPlot({ggplot(data=df, aes(x=year, y=savings)) +
-      geom_bar(stat="identity", width=0.5, fill="steelblue")})
+  output$spi.hist <- renderPlot({if (input$go==0) {qplot(subdat$Density,geom="histogram", binwidth = 0.0275,xlab = 'Mean SPI',ylab = 'Zipcode Count',
+                                      fill=I("lightsteelblue1")) + theme_light()+ theme(text=element_text(size=8,  family="Arial")) +labs(caption="SPI: Definition")}
+                                 else {qplot(subdat$Density,geom="histogram", binwidth = 0.0275,xlab = 'Mean SPI',ylab = 'Zipcode Count',
+                                             fill=I("lightsteelblue1")) + theme_light()+ theme(text=element_text(size=8,  family="Arial")) +labs(caption="SPI: Definition") + geom_vline(xintercept = zip.spi(), linetype="dotted", 
+                                                                                                                                                        color = "red", size=3)}}) 
+                                        
+                                        
+                                        
   
 #------Business Attribute
   employee_count <- reactive({ input$empl_slide 
