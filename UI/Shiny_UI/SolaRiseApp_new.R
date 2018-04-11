@@ -10,6 +10,12 @@ library(geosphere)
 library(data.table)
 library(xts)
 library(shinythemes)
+library(xml2)
+library(rvest)
+library(stringr)
+library(rjson)
+library(reshape)
+library(FinancialMath)
 
 # ----------------------------
 # Loading and selecting Data
@@ -62,7 +68,78 @@ weekly_avg <- function(station_id) {
   weekly
 }
 
+# generate plot data
+plot_data <- function(station_id, plot_type) {
+  if (plot_type == 'Monthly Average') {
+    plot_data = monthly_avg(station_id)
+  } else if (plot_type == 'Weekly Average') {
+    plot_data = weekly_avg(station_id)
+  } else {
+    print("Invalid selection")
+  }
+  plot_data
+}
 
+# generate plot label
+plot_label <- function(station_id, plot_type) {
+  if (plot_type == 'Monthly Average') {
+    plot_label = months(index(monthly_avg(station_id)))
+  } else if (plot_type == 'Weekly Average') {
+    plot_label = week(index(weekly_avg(station_id)))
+  } else {
+    print("Invalid selection")
+  }
+  plot_label
+}
+
+# HTTP Interface
+http = 'http://flask-env.migvx8ame2.us-west-2.elasticbeanstalk.com/solarise?biz=warehouse&wkrs=80&sqft=10000'
+read_http <- function(http) {
+  pg = read_html(http)
+  body_text = pg %>% html_nodes("body") %>% html_text()
+  text = fromJSON(body_text)
+  cost = c(text$cost, 1000)
+  saving = c(0, text$saving)
+  cashflow = saving - cost
+  # Break Even DF
+  break_even = setNames(data.frame(
+    c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+    saving, cost, cashflow),
+    c('Year', 'Saving', 'Cost', 'Cashflow')
+  )
+  break_even 
+}
+
+pnl_plot <- function(break_even) {
+  melted_breakeven = setNames(melt(break_even, id = 'Year'), c('Year', 'PnL', 'value'))
+  melted_breakeven
+}
+
+pnl_table <- function(break_even) {
+  breakeven_T = setNames(cbind(c("Saving", "Cost", "Cashflow"), transpose(break_even[2:4])), 
+                         c("Profit_&_Loss", "Year 0", "Year 1", "Year 2", "Year 3", "Year 4", 
+                           "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"))
+  breakeven_T
+} 
+
+roi_cal <- function(be, i) {
+  npv_rev = NPV(i = i, cf0 = be$Saving[1], cf = be$Saving[2:11], time = be$Year[2:11])
+  npv_cost = NPV(i = i, cf0 = be$Cost[1], cf = be$Cost[2:11], time = be$Year[2:11])
+  npv = npv_rev - npv_cost
+  roi = npv_rev / npv_cost
+  finance = setNames(data.frame(c('NPV Revenue', 'NPV Cost', 'NPV Cashflow', 'ROI'), c(npv_rev, npv_cost, npv, roi)),
+                     c("Net Present Values", ""))
+  finance
+}
+
+decision <- function(be, expect) {
+  be_year = be$Year[match(0, be$Cashflow)]
+  if (be_year <= expect) {
+    text = paste("YES, Solar Panel Installation Meets Your Investment Objectives")
+  } else {
+    text = paste("NO, Solar Panel Install Does Not Meet Your Investment Objectives")
+  }
+}
 #------------
 # UI Section
 #------------
@@ -106,6 +183,7 @@ ui <- fluidPage("",
                                )),
                       fluidRow(column(12, div(style = "height:100px;")))
                       ),
+             tabPanel("Our Methodology"), 
              tabPanel("Tell us Your Business", 
                 
                       #Input Panel
@@ -146,16 +224,16 @@ ui <- fluidPage("",
                                  column(6,sliderInput(inputId='weekend_start', label = 'Weekend Start Hour', value = 10, min=0, max = 23)),
                                  column(6,sliderInput(inputId='weekend_total', label = 'Weekend Daily Hours', value = 12, min=0, max = 24)),                                  
                                  column(6,checkboxGroupInput(inputId='consump_check', label = 'Check All That Apply', 
-                                                                             choices = c('Open 24' = 'Open 24',
-                                                                                         'Electric Heat' = 'Electric Heat',
-                                                                                         'Electric Cool' = 'Electric Cool'))),
+                                                             selected = 'Electric Cool', 
+                                                             choices = c('Open 24' = 'Open 24', 
+                                                                         'Electric Heat' = 'Electric Heat', 
+                                                                         'Electric Cool' = 'Electric Cool'))),
                                  column(6,checkboxGroupInput(inputId='consump_check_2', label = NULL, 
+                                                             selected = "Refridgeration",
                                                              choices = c('Open Weekend' = 'Open Wkd',
                                                                          'Electric Cook' = 'Electric Cook',
                                                                          'Refridgeration' = 'Refridgeration',
                                                                          'Electic Manufacture' = 'Electric Manufacture'))),
-                                  column(12,h4("Expected Payback Period", align = 'center')),
-                                  column(12,numericInput(inputId = 'payback', label = 'Years', value = 5, min = 1, max = 10)),
                                   actionButton("detail", "Detailed Report")
                                  )),
                       column(8, leafletOutput("map", height = 900),
@@ -165,23 +243,41 @@ ui <- fluidPage("",
                                            plotOutput("spi.hist", height = 250)))
                       ),
              tabPanel(title = "Detailed Report",
-                        h2("Solar Energy Annual Trend", align = 'center'),
+                      column(4, 
+                        wellPanel(style = "position:fixed;", id = "controls", class = "panel panel-default", fixed = TRUE, 
+                                      draggable = FALSE, left = "auto", right = "auto", bottom = "auto",
+                                      width = "auto", height = "auto",
+                                  h4("Solar Potential Index Forecast", align = 'center'),
+                                  selectInput("spi_plot", "Select Solar Potential Plot:", 
+                                                                     c("Monthly Average" = "Monthly Average", 
+                                                                       "Weekly Average" = "Weekly Average")),
+                                  h4("Discount Rate", align = 'center'),
+                                  sliderInput(inputId='discount_slide', label = 'Discount (%)', value = 8, min=4, max = 12),
+                                  h4("Expected Payback Period", align = 'center'),
+                                  sliderInput(inputId='payback_slide', label = 'Years', value = 5, min=2, max = 10)
+                        )),
+                      column(8,
+                        h3("Personalized Report", align = 'center'),
+                        fluidRow(column(12, div(style = "height:50px;"))),
+                        h4("Solar Potential Forecast", align = 'left'),
                         fluidRow(
-                          column(12, 
-                                 plotOutput("SPI_monthly", height = 400))),  
-                        fluidRow(column(12, div(style = "height:100px;"))),
+                          column(12, plotOutput("SPI", height = 400))),  
+                        fluidRow(column(12, div(style = "height:50px;"))),
+                        h4("Business Summary", align = 'left'),
                         fluidRow(
-                          column(12, 
-                                 plotOutput("SPI_weekly", height = 400))
-                        ),
-                        fluidRow(column(12, div(style = "height:100px;"))),
-                        h2("Personalized Reporting", align = 'center'),
-                        fluidRow(
-                          column(12, htmlOutput("BusinessAttri"))
+                          column(12, tableOutput("BusinessAttri"))
                           ),
-                        fluidRow(column(12, div(style = "height:100px;"))),
+                        fluidRow(column(12, div(style = "height:50px;"))),
+                        h4("ROI Analysis", align = 'left'),
                         fluidRow(
-                          column(12, img(src='SolarROI.jpg', height = 400))
+                          column(12, plotOutput("ROI", height = 400))
+                          ),
+                        fluidRow(column(12, div(style = "height:50px;"))),
+                        fluidRow(
+                          column(12, tableOutput("pnl")),
+                          column(12, tableOutput("roi"))
+                        ),
+                        fluidRow(column(12, h2(textOutput("decision_message"))))
                         )
                ),
              tabPanel("Our Team") 
@@ -203,6 +299,10 @@ server <- function(input,output, session){
 
   #-----Map Search
   points <- eventReactive(input$go, {geocode(input$Address, output='latlon', source = "dsk")})
+  breakeven_P <- eventReactive(input$detail, {read_http(http)})
+  breakeven_T <- eventReactive(input$detail, {read_http(http)})
+  roi_T <- eventReactive(input$detail, {read_http(http)})
+  decision_T <- eventReactive(input$detail, {read_http(http)})
   
   rev.zip <- eventReactive(input$go, {as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
                                                                           geocode(input$Address, output='latlon', source = "dsk")$lat),
@@ -241,14 +341,14 @@ server <- function(input,output, session){
   
   #-----Consumption Graphs
   
-  output$SPI_monthly = renderPlot({
+  output$SPI = renderPlot({
     #par(bg = '#2FA4E7')
-    barplot(monthly_avg(nearest_station(stations, points())[2]), 
-            names.arg = c(months(index(monthly_avg(nearest_station(stations, points())[2])))), 
-            main = 'Monthly Average SPI Est',
-            ylab = 'Monthly Avg SPI',
-            xlab = 'Month', 
-            cex.main = 0.8,
+    barplot(plot_data(nearest_station(stations, points())[2], input$spi_plot), 
+            names.arg = plot_label(nearest_station(stations, points())[2], input$spi_plot), 
+            main = input$spi_plot,
+            ylab = 'Solar Potential Index',
+            xlab = if (input$spi_plot == 'Monthly Average') "Month" else "Week",
+            cex.main = 1.5,
             cex.lab = 0.8,
             cex.axis = 0.8,
             ylim = c(0.0, 1.05),
@@ -256,22 +356,22 @@ server <- function(input,output, session){
             col = c('firebrick', 'darkorange', 'darkolivegreen2'))
     legend("topright", c("Worst", "Average", "Best"), fill = c('darkolivegreen2', 'darkorange', 'firebrick'))
   })
-  output$SPI_weekly = renderPlot({
-    #par(bg = '#2FA4E7')
-    barplot(weekly_avg(nearest_station(stations, points())[2]), 
-            names.arg = c(week(index(weekly_avg(nearest_station(stations, points())[2])))), 
-            main = 'Weekly Average SPI Est',
-            ylab = 'Weekly Avg SPI',
-            xlab = 'Week of the Year', 
-            cex.main = 0.8,
-            cex.lab = 0.8,
-            cex.axis = 0.8,
-            ylim = c(0.0, 1.05),
-            beside = TRUE,
-            col = c('firebrick', 'darkorange', 'darkolivegreen2'))
-    legend("topright", c("Worst", "Average", "Best"), fill = c('darkolivegreen2', 'firebrick', 'darkorange'))
-  })
   
+  output$pnl = renderTable({ pnl_table(breakeven_T()) })
+  output$roi = renderTable({ roi_cal(roi_T(), input$discount_slide * 0.01) })
+  
+  output$ROI = renderPlot({
+    ggplot(pnl_plot(breakeven_P()), aes(x=Year, y = value, color = PnL)) + 
+      geom_line(size = 1.5) + 
+      ylab('Dollar ($)') + 
+      xlab('Year') + ggtitle("Solar Installation ROI") +
+      geom_hline(yintercept = 0) + 
+      scale_color_manual(values=c("darkolivegreen2", "firebrick", "royalblue")) + 
+      theme_linedraw() + 
+      theme(plot.title = element_text(size = 18, hjust = 0.5, face = 'bold'),
+            legend.title = element_text(size = 12),
+            legend.text = element_text(size = 12))
+  })
   
   output$spi.hist <- renderPlot({if (input$go==0) {qplot(subdat$Density,geom="histogram", binwidth = 0.0275,xlab = 'Mean SPI',ylab = 'Zipcode Count',
                                       fill=I("lightsteelblue1")) + theme_light()+ theme(text=element_text(size=8,  family="Arial")) +labs(caption="SPI: Definition")}
@@ -287,25 +387,34 @@ server <- function(input,output, session){
   })
   office_size <- reactive({ input$sqft_slide 
   })
-  hours <- reactive({ input$hrs_slide 
+  weekday_hours <- reactive({ input$weekday_total 
   })
-  consumption <- reactive({ input$consump_check 
+  weekend_hours <- reactive({ input$weekend_total 
   })
-  payback <- reactive({ input$payback 
+  consumption1 <- reactive({ input$consump_check 
+  })
+  consumption2 <- reactive({ input$consump_check_2 
+  })
+  discount <- reactive({ input$discount_slide 
+  })
+  payback <- reactive({ input$payback_slide 
   })
   
-  output$BusinessAttri = renderUI({
-    str1 <- paste("Climate Zone: ", nearest_station(stations, points())[1])
-    str2 <- "Business Attributes"
-    str3 <- paste("Employee Size: ", employee_count())
-    str4 <- paste("Office Size: ", office_size())
-    str5 <- paste("Weekly Business Hours: ", hours())
-    str6 <- paste("Comsumption: ", consumption())
-    str7 <- paste("Payback Period: ", payback())
-    HTML(paste(str1, str2, str3, str4, str5, str6, str7, sep = '<br/>'))
+  output$BusinessAttri = renderTable({
+    setNames( 
+      data.frame(  
+        c("Climate Zone", "Employee Size", "Office Size", "weekday_hours", "weekend_hours", "Consumption", ""),  
+        c(nearest_station(stations, points())[1], employee_count(), office_size(), weekday_hours(), 
+          weekend_hours(), consumption1(), consumption2())
+        ),
+      c("Business Information", "Values")
+      )
   })
-
+  
+  output$decision_message = renderText({ 
+    decision(decision_T(), input$payback_slide)
+  })
+  
   }
-
 
 shinyApp(ui=ui, server=server)
