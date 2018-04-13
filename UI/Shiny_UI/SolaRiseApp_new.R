@@ -225,9 +225,9 @@ ui <- fluidPage("",
                                  column(6,sliderInput(inputId='weekend_total', label = 'Weekend Daily Hours', value = 12, min=0, max = 24)),                                  
                                  column(6,checkboxGroupInput(inputId='consump_check', label = 'Check All That Apply', 
                                                              selected = 'Electric Cool', 
-                                                             choices = c('Open 24' = 'Open 24', 
-                                                                         'Electric Heat' = 'Electric Heat', 
-                                                                         'Electric Cool' = 'Electric Cool'))),
+                                                             choices = c('Open 24' = 'Open_24', 
+                                                                         'Electric Heat' = 'Electric_Heat', 
+                                                                         'Electric Cool' = 'Electric_Cool'))),
                                  column(6,checkboxGroupInput(inputId='consump_check_2', label = NULL, 
                                                              selected = "Refridgeration",
                                                              choices = c('Open Weekend' = 'Open Wkd',
@@ -265,7 +265,8 @@ ui <- fluidPage("",
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("Business Summary", align = 'left'),
                         fluidRow(
-                          column(12, tableOutput("BusinessAttri"))
+                          column(12, tableOutput("BusinessAttri")),
+                          column(12, textOutput("http"))
                           ),
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("ROI Analysis", align = 'left'),
@@ -383,11 +384,17 @@ server <- function(input,output, session){
                                         
   
 #------Business Attribute
+  biz_type <- reactive({ input$biz_select
+  })
   employee_count <- reactive({ input$empl_slide 
   })
   office_size <- reactive({ input$sqft_slide 
   })
+  weekday_start <- reactive({ input$weekday_start 
+  })
   weekday_hours <- reactive({ input$weekday_total 
+  })
+  weekend_start <- reactive({ input$weekend_start 
   })
   weekend_hours <- reactive({ input$weekend_total 
   })
@@ -409,6 +416,20 @@ server <- function(input,output, session){
         ),
       c("Business Information", "Values")
       )
+  })
+  
+  output$http = renderText({ 
+    paste("http://flask-env.migvx8ame2.us-west-2.elasticbeanstalk.com/solarise?",
+          "biz_type=", toString(biz_type()),
+          "&employee_count=", toString(employee_count()),
+          "&office_size=", toString(office_size()),
+          "&weekday_start=", toString(weekday_start()),
+          "&weekday_hours=", toString(weekday_hours()),
+          "&weekend_start=", toString(weekend_start()),
+          "&weekend_hours=", toString(weekend_hours()),
+          "&consumption1=", toString(consumption1()),
+          "&consumption2=", toString(consumption2()),
+          sep = "")
   })
   
   output$decision_message = renderText({ 
