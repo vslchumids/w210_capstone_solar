@@ -146,43 +146,81 @@ decision <- function(be, expect) {
 
 ui <- fluidPage("",
   #theme = 'agency.css',
-  theme = shinytheme("cerulean"),
-  titlePanel(title = div("SolaRise Business Solar Estimator", 
+  theme = shinytheme("yeti"),
+  titlePanel(title = div("SolaRise Business Optimizer", 
              img(src='power_solar.png', height = 50, width = 75))),  
   navbarPage(title = '', 
              id="nav",
              #theme = 'agency.css',
-             tabPanel(title = "About Us",
+             tabPanel(title = "About",
                       fluidRow(
-                        column(4, img(src='solar_pic1.jpg', height = 200, width = 300, 
+                        column(12, img(src='AboutPrimary.jpg', height = "auto", width = "100%", 
+                                       top = 20, bottom = 20, align = "center"))), 
+                      fluidRow(column(12, h2("What You Need to Know", align = 'center'))),
+                      # fluidRow(column(2, img(src='sun.jpg', height = "auto", width = "auto", 
+                      #                        top = 20, bottom = 20, align = "center")),
+                      #          column(10, h4("What's My Energy Generation Potential", 
+                      #                       top = 60, bottom = 20, align = "left"))),
+                      # fluidRow(
+                      #   column(4, h4("Tell Us About Your Business", align = 'center')),
+                      #   column(4, h4("We Customize Your System", align = 'center')),
+                      #   column(4, h4("We Help You Decide?", align = 'center'))
+                      #   
+                      # ),
+                      # 
+                      # fluidRow(
+                      #   column(4,img(src='TellUs.jpg', height = "50%", width = "50%", align = "center")),
+                      #   column(4,img(src='TellUs.jpg', height = "50%", width = "50%", align = "center")),
+                      #   column(4,img(src='TellUs.jpg', height = "50%", width = "50%", align = "center"))
+                      #   
+                      # ),
+                      
+                      #fluidRow(column(12, div(style = "height:15px;"))),
+                      fluidRow(
+                        column(2, img(src='sun.jpg', height = "auto", width = "70%", 
                                       top = 20, bottom = 20, align = "right")), 
-                        column(8, h3("Who are we?", align = 'left'),
-                         p("The cost of solar installation and adoption declined significant in the past few years.
-                            Does solar adoption the right decision for your business? Solarise has the answer.
-                            SolaRise is an solar evaluator for small to midsize businesses based on data science and 
-                            machine learning algorithm. Our intellegent engine gives custom and intuitive guidence 
-                            to business owners on solar adoption."))),
-                      fluidRow(column(12, div(style = "height:100px;"))),
+                        column(10, h3("What's My Energy Generation Potential?", align = 'left'),
+                               p("Based on your location we utilize machine learing and forecasting to predict the future potential
+                                 for energy generation in your specific area."))),
+                      
+                      
+                      # p("Unlike existing solar energy evaluators which only provide estimation for residentual users
+                      #    based on the location and roof top size. SolaRise is designed for small to medium size business.
+                      #    It not only uses location, weather data, and roof size for solar potential estimation and projection
+                      #    but also considers business types, operation hours, energy usage pattern, and  business growth. 
+                      #    The tool is designed with a typical decision making process in mind and intuitive to business onwers"))),
+                      fluidRow(column(12, div(style = "height:40px;"))),
                       fluidRow(
-                        column(4, img(src='business1.jpg', height = 200, width = 300, 
+                        column(2, img(src='consump.jpg', height = "auto", width = "70%", 
                                       top = 20, bottom = 20, align = "right")), 
-                        column(8, h3("Why Solarise?", align = 'left'),
-                               p("Unlike existing solar energy evaluators which only provide estimation for residentual users
-                                  based on the location and roof top size. SolaRise is designed for small to medium size business.
-                                  It not only uses location, weather data, and roof size for solar potential estimation and projection
-                                  but also considers business types, operation hours, energy usage pattern, and  business growth. 
-                                  The tool is designed with a typical decision making process in mind and intuitive to business onwers"))),
-                      fluidRow(column(12, div(style = "height:100px;"))),
+                        column(10, h3("How Do My Consunmption Pattern Impact Savings?", align = 'left'),
+                               p("Provide us the specifics for your business and we estimate the your current and future  energy 
+                                 consumption needs."))),                      
+                      fluidRow(column(12, div(style = "height:40px;"))),
                       fluidRow(
-                        column(4, img(src='howto.jpg', height=200, width = 300,  
-                                      top = 20, bottom = 20, align = "right")),
-                        column(8, h3("How to use?", align = 'left'),
-                               br("Go to", strong('Tell us Your Business'), "fill in the input form about your business, press report."),
-                               br("Go to", strong('Detailed Report => Solar Energy Project'), "for solar potential index annual projection"),
-                               br("Go to", strong('Detailed Report => Business Report'), "for detailed business related ")
-                               )),
-                      fluidRow(column(12, div(style = "height:100px;")))
-                      ),
+                        column(2, img(src='savings.jpg', height = "auto", width = "70%", 
+                                      top = 20, bottom = 20, align = "right")), 
+                        column(10, h3("How Much Do I Need to Spend?", align = 'left'),
+                               p("We optimize a system.  Estimate costs and determine any local rebates available to you."))),                        
+                      
+                      fluidRow(column(12, div(style = "height:40px;"))),
+                      fluidRow(
+                        column(12, img(src='whysolarise.jpg', height = "auto", width = "100%", 
+                                       top = 20, bottom = 20, align = "center"))),
+                      fluidRow(column(12, div(style = "height:40px;")))
+                      
+                      
+                      
+                      # fluidRow(
+                      #   column(4, img(src='howto.jpg', height=200, width = 300,  
+                      #                 top = 20, bottom = 20, align = "right")),
+                      #   column(8, h3("How to use?", align = 'left'),
+                      #          br("Go to", strong('Tell us Your Business'), "fill in the input form about your business, press report."),
+                      #          br("Go to", strong('Detailed Report => Solar Energy Project'), "for solar potential index annual projection"),
+                      #          br("Go to", strong('Detailed Report => Business Report'), "for detailed business related ")
+                      #          )),
+                      # fluidRow(column(12, div(style = "height:100px;")))
+                               ),
              tabPanel("Our Methodology"), 
              tabPanel("Tell us Your Business", 
                 
