@@ -316,7 +316,8 @@ ui <- fluidPage("",
                           column(12, tableOutput("pnl")),
                           column(12, tableOutput("roi"))
                         ),
-                        fluidRow(column(12, h2(textOutput("decision_message"))))
+                        fluidRow(column(2, imageOutput("decision_image")),
+                                 column(10, h2(textOutput("decision_message"))))
                         )
                ),
              tabPanel("Our Team") 
@@ -343,9 +344,13 @@ server <- function(input,output, session){
   roi_T <- eventReactive(input$detail, {read_http(http)})
   decision_T <- eventReactive(input$detail, {read_http(http)})
   
+  
+  #rev.zip <- eventReactive(input$go, {revgeocode(as.numeric(geocode(input$Address)),output = 'more')$postal_code})
+  
+  
   rev.zip <- eventReactive(input$go, {as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
-                                                                          geocode(input$Address, output='latlon', source = "dsk")$lat),
-                                                                        output = 'more')$postal_code))})
+                                                                           geocode(input$Address, output='latlon', source = "dsk")$lat),
+                                                                         output = 'more')$postal_code))})
   
   zip.spi <- eventReactive(input$go, {subdat[subdat$GEOID10 == as.numeric(as.character(revgeocode(c(geocode(input$Address, output='latlon', source = "dsk")$lon,
                                                                                                          geocode(input$Address, output='latlon', source = "dsk")$lat),
@@ -359,7 +364,7 @@ server <- function(input,output, session){
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
-      addPolygons(label = if (input$go==0) {labels} else {labels},
+      addPolygons(label = if (input$go==0) {labels} else {NULL},
                   data= if (input$go==0) {subdat} else {subdat[subdat$GEOID10 == rev.zip(),]}, 
                   fillColor =if (input$go==0) {~pal(subdat$Density)} else {~pal(subdat[subdat$GEOID10 == rev.zip(),]$Density)},
                   fillOpacity =if (input$go==0) {0.45} else {0.00045},
@@ -473,7 +478,9 @@ server <- function(input,output, session){
   output$decision_message = renderText({ 
     decision(decision_T(), input$payback_slide)
   })
-  
+
+   output$decision_image = renderImage({list(src = if (str_detect(decision(decision_T(), input$payback_slide), 'YES')) {'check.jpg'} else {'xbox.jpg'},
+                                             contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
   }
 
 shinyApp(ui=ui, server=server)
