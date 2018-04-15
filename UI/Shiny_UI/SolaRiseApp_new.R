@@ -163,72 +163,38 @@ ui <- fluidPage("",
              id="nav",
              #theme = 'agency.css',
              tabPanel(title = "About",
-                      fluidRow(column(12,img(src='AboutPrimary.jpg', height = "auto", width = "100%", 
+                      fluidRow(column(12,img(src='AboutPrimary.png', height = "auto", width = "100%", 
                                        top = 20, bottom = 20, align = "center"))), 
                       fluidRow(column(12, h2("What You Need to Know", align = 'center'))),
-                      # fluidRow(column(2, img(src='sun.jpg', height = "auto", width = "auto", 
-                      #                        top = 20, bottom = 20, align = "center")),
-                      #          column(10, h4("What's My Energy Generation Potential", 
-                      #                       top = 60, bottom = 20, align = "left"))),
-                      # fluidRow(
-                      #   column(4, h4("Tell Us About Your Business", align = 'center')),
-                      #   column(4, h4("We Customize Your System", align = 'center')),
-                      #   column(4, h4("We Help You Decide?", align = 'center'))
-                      #   
-                      # ),
-                      # 
-                      # fluidRow(
-                      #   column(4,img(src='TellUs.jpg', height = "50%", width = "50%", align = "center")),
-                      #   column(4,img(src='TellUs.jpg', height = "50%", width = "50%", align = "center")),
-                      #   column(4,img(src='TellUs.jpg', height = "50%", width = "50%", align = "center"))
-                      #   
-                      # ),
-                      
-                      #fluidRow(column(12, div(style = "height:15px;"))),
+
                       fluidRow(
-                        column(2, img(src='sun.jpg', height = "auto", width = "70%", 
+                        column(2, img(src='sun.png', height = "auto", width = "70%", 
                                       top = 20, bottom = 20, align = "right")), 
                         column(10, h3("What's My Energy Generation Potential?", align = 'left'),
-                               p("Based on your location we utilize machine learing and forecasting to predict the future potential
+                               p("Based on your location we utilize machine learing and forecasting methods to predict the future potential
                                  for energy generation in your specific area."))),
-                      
-                      
-                      # p("Unlike existing solar energy evaluators which only provide estimation for residentual users
-                      #    based on the location and roof top size. SolaRise is designed for small to medium size business.
-                      #    It not only uses location, weather data, and roof size for solar potential estimation and projection
-                      #    but also considers business types, operation hours, energy usage pattern, and  business growth. 
-                      #    The tool is designed with a typical decision making process in mind and intuitive to business onwers"))),
+
                       fluidRow(column(12, div(style = "height:40px;"))),
                       fluidRow(
-                        column(2, img(src='consump.jpg', height = "auto", width = "70%", 
+                        column(2, img(src='consump.png', height = "auto", width = "70%", 
                                       top = 20, bottom = 20, align = "right")), 
-                        column(10, h3("How Do My Consumption Pattern Impact Savings?", align = 'left'),
-                               p("Provide us the specifics for your business and we estimate the your current and future  energy 
+                        column(10, h3("How Do My Usage Patterns Impact Savings?", align = 'left'),
+                               p("Provide us the specifics for your business and we estimate your current and future energy 
                                  consumption needs."))),                      
                       fluidRow(column(12, div(style = "height:40px;"))),
                       fluidRow(
-                        column(2, img(src='savings.jpg', height = "auto", width = "70%", 
+                        column(2, img(src='savings.png', height = "auto", width = "70%", 
                                       top = 20, bottom = 20, align = "right")), 
                         column(10, h3("How Much Do I Need to Spend?", align = 'left'),
                                p("We optimize a system.  Estimate costs and determine any local rebates available to you."))),                        
                       
                       fluidRow(column(12, div(style = "height:40px;"))),
                       fluidRow(
-                        column(12, img(src='whysolarise.jpg', height = "auto", width = "100%", 
+                        column(12, img(src='whysolarise.png', height = "auto", width = "100%", 
                                        top = 20, bottom = 20, align = "center"))),
                       fluidRow(column(12, div(style = "height:10px;"))),
                       
-                      
-                      
-                      # fluidRow(
-                      #   column(4, img(src='howto.jpg', height=200, width = 300,  
-                      #                 top = 20, bottom = 20, align = "right")),
-                      #   column(8, h3("How to use?", align = 'left'),
-                      #          br("Go to", strong('Tell us Your Business'), "fill in the input form about your business, press report."),
-                      #          br("Go to", strong('Detailed Report => Solar Energy Project'), "for solar potential index annual projection"),
-                      #          br("Go to", strong('Detailed Report => Business Report'), "for detailed business related ")
-                      #          )),
-                      # fluidRow(column(12, div(style = "height:100px;")))
+
                       fluidRow(column(12, h4("The SolaRise Team", align = 'center'))),
                       fluidRow(column(12, h5(a("Vincent Chu",href= 'https://www.linkedin.com/in/vincent-chu-9b23311/'), align = 'center'))),
                       fluidRow(column(12,h5(a("  Qian Yu  ",href= 'https://www.linkedin.com/in/qyupublic/'), align = 'center'))),
@@ -240,11 +206,11 @@ ui <- fluidPage("",
                         column(8, align="center", 
                                h2("Data Science for Business Decision", align = 'center'),
                                p(),
-                               p("Solarise's product philosophy focus on using data science and machine learning for better 
-                                 business decision making. User inputs combined with data from external sources are feed into mutliple
-                                 stage of machine learning models to forecast solar potential, energy consumptions, and business
-                                 scenarios. The final model produces an optimized muti-year cach flow of the solar panel investment. 
-                                 User can futher adjust key finacial parameters before a final decision", align = 'left'),
+                               p("Solarise's product philosophy focuses on using data science and machine learning for better 
+                                 business decision making. User inputs combined with data from external sources are fed into mutliple
+                                 stages of machine learning models to forecast solar potential, energy consumption, and business
+                                 scenarios. The final model produces an optimized muti-year cach flow analysis for the solar panel investment. 
+                                 Users can futher adjust key finacial parameters before making a final decision", align = 'left'),
                                p(),
                                img(src='ds_decision.png', height = "auto", width = "80%",  top = 20, bottom = 20), 
                                h4("Design Methodology", align="center")),
@@ -253,23 +219,35 @@ ui <- fluidPage("",
                       fluidRow(
                         column(2),
                         column(8, align="center",  
-                               h2("Data Source", align = 'center'), 
+                               h2("Data Sources", align = 'center'), 
                                fluidRow(
                                  column(1, img(src='weather_data.png', height = "auto", width = "100%", 
                                         top = 20, bottom = 0, align = "left")), 
                                  column(7, align = 'left',
-                                        h3("Weather Data source", align = "left"),
-                                        p("NOAA's National Solar Radiation Data Base ", align = "left"),
-                                        a("https://www1.ncdc.noaa.gov/", align = "left"),
+                                        h3("Weather Data Sources", align = "left"),
+                                        a("NOAA's National Solar Radiation Data Base ",href= 'https://www1.ncdc.noaa.gov/', align = "left"),
+                                        #a("https://www1.ncdc.noaa.gov/", align = "left"),
                                         fluidRow(column(7, div(style = "height:10px;"))),
-                                        p("California Energy Commission", align = "left"),
-                                        a("http://www.energy.ca.gov/maps/renewable/building_climate_zones.html", align = "left"))),
+                                        a("California Energy Commission",href="http://www.energy.ca.gov/maps/renewable/building_climate_zones.html", align = "left"))),
+                                        #a("http://www.energy.ca.gov/maps/renewable/building_climate_zones.html", align = "left"))),
                                fluidRow(column(12, div(style = "height:30px;"))),
                                fluidRow(
                                  column(1, img(src='consumption_data.png', height = "auto", width = "100%", 
                                         top = 20, bottom = 0, align = "left")), 
-                                 column(7, 
-                                        h3("Consumption Data source", align = "left")))),
+                                 column(7, align = 'left',
+                                        h3("Consumption Data Source", align = "left"),
+                                        a("US Energy Information Administration",href= 'https://www.eia.gov/consumption/commercial/', align = "left"))), 
+                                        
+
+                               fluidRow(column(12, div(style = "height:30px;"))),
+                               fluidRow(
+                                 column(1, img(src='cash.png', height = "auto", width = "100%", 
+                                               top = 20, bottom = 0, align = "left")), 
+                                 column(7, align = 'left',
+                                        h3("Incentives Data Source", align = "left"),
+                                        a("Database of State Incentives for Reneawbles & Efficiency",href= 'http://www.dsireusa.org/', align = "left")))                              
+                               
+                               ),
                         column(2)),
                       fluidRow(column(12, div(style = "height:50px;"))),
                       fluidRow(
@@ -277,19 +255,18 @@ ui <- fluidPage("",
                         column(8, align="center",  
                                h2("Model Interaction", align = 'center'),
                                p(),
-                               p("There are a number models interact with each other in our design. Here are some details:", align = "left"),
+                               p("There are a number models that interact with each other in our design. Here are some details:", align = "left"),
                                h3("Solar Generation:", align="left"),
-                               p("We use weather station data of california to build a clustering model. It outputs a list of climate regions 
-                                  of california; Within each climate region, we build time series models of solar irradiance to forecast and                                      generalize the regions annual solar potential. Then Based on user input address, we can use geo location 
-                                  model to calculate the lattitude and longitude, determine the climate region the address belongs to, and 
-                                  project its solar potential.", align = 'left'),
+                               p("We utilize California weather station data to build a clustering model. The model outputs a list of climate regions 
+                                  for the state. Within each climate region, we identify the centroid and build a time series forecast for solar irradiance. 
+                                  Using location data we are able to associate any California address with a specific climate region and it's respective future irradiance potential.", align = 'left'),
                                h3("Energy Consumption:", align="left"),
                                p("We use national commercial building energy consumption data to build an OLS regression model. Based on 
                                  user input in business type, size, building features, and operation hours, we can predict a consumption
                                  pattern for the business", align="left"),
                                h3("Optimization:", align="left"),
-                               p("Lastly, we feed both solar generation potential, consumption pattern, and other constrains to 
-                                 an linear progarmming model for optimization. This final model will produce an ideal cachflow
+                               p("Lastly, we feed the solar generation potential, expected consumption patterns, and other constrains to 
+                                 a linear progarmming model for optimization. This final model produces an ideal cachflow
                                  based on the given information", align="left"),
                                p(), 
                                img(src='models_inter.png', height = "auto", width = "90%", top = 20, bottom = 20), 
@@ -358,8 +335,8 @@ ui <- fluidPage("",
                       column(8, leafletOutput("map", height = 900),
                              absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                                            draggable = FALSE, top = "auto", left = "auto", right = 50, bottom = 40,
-                                           width = 200, height = "auto",
-                                           plotOutput("spi.hist", height = 250)))
+                                           width = 275, height = "auto",
+                                           plotOutput("spi.hist", height = 275)))
                       ),
              tabPanel(title = "Solarise Report",
                       column(4, 
@@ -416,7 +393,7 @@ server <- function(input,output, session){
   
   #------Setup Density Buckets
   bins <- c(0.40, 0.43, 0.46, 0.48, 0.51, 0.54, 0.57, 0.59, 0.62)
-  pal <- colorBin("YlOrRd", domain = subdat$Density, bins = bins)
+  pal <- colorBin("RdYlGn", domain = subdat$Density, bins = bins)
 
   #-----Map Search
   points <- eventReactive(input$go, {geocode(input$Address, output='latlon', source = "dsk")})
@@ -454,12 +431,7 @@ server <- function(input,output, session){
                   labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"),textsize = "15px",direction = "auto")) %>%
 #<<<<<<< HEAD
       setView(if(input$go==0) {lng = -116.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=11}) %>% 
-#=======
-      #setView(if(input$go==0) {lng = -119.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=10}) %>% 
-#>>>>>>> 9f665df4fb6f42934239666abfc3992c9f2afbff
       addMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}) %>% 
-      #addCircleMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}, color = 'red',
-                       #if(input$go==0) {opacity = 0} else {opacity = 1}, radius = 50)
       leaflet::addLegend(pal=pal,value = subdat$Density, opacity = 0.7, title = "Mean SPI", position = "topright")
       
   })
@@ -479,7 +451,7 @@ server <- function(input,output, session){
             ylim = c(0.0, 1.05),
             beside = TRUE,
             col = c('firebrick', 'darkorange', 'darkolivegreen2'))
-    legend("topright", c("Worst", "Average", "Best"), fill = c('darkolivegreen2', 'darkorange', 'firebrick'))
+    legend("topright", c("Worst", "Average", "Best"), fill = c('firebrick', 'darkorange', 'darkolivegreen2'))
   })
   
   output$pnl = renderTable({ pnl_table(breakeven_T()) })
@@ -501,11 +473,11 @@ server <- function(input,output, session){
   output$spi.hist <- renderPlot({
     if (input$go==0)  {
       qplot(subdat$Density, geom="histogram", 
-           binwidth = 0.0175, xlab = 'Mean SPI',
+           binwidth = 0.0275, xlab = 'Mean SPI',
            ylab = 'Zipcode Count', main = 'Mean SPI Histogram', 
            fill=I("lightsteelblue1")) + 
       theme_light() + 
-      theme(text=element_text(size=8,  family="Arial")) + 
+      theme(text=element_text(size=10,  family="Arial")) + 
       labs(caption="SPI: Definition")} 
     else {
       qplot(subdat$Density, geom="histogram", 
@@ -513,7 +485,7 @@ server <- function(input,output, session){
             ylab = 'Zipcode Count', main = 'Mean SPI Histogram', 
             fill=I("lightsteelblue1")) + 
         theme_light()+ 
-        theme(text=element_text(size=8,  family="Arial")) +
+        theme(text=element_text(size=10,  family="Arial")) +
         labs(caption="SPI: Definition") + 
         geom_vline(xintercept = zip.spi(), linetype="dashed", color = "red", size=1.5)}}) 
                                         
