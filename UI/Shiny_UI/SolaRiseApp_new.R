@@ -190,7 +190,7 @@ ui <- fluidPage("",
                       
                       fluidRow(column(12, div(style = "height:40px;"))),
                       fluidRow(
-                        column(12, img(src='whysolarise.png', height = "auto", width = "100%", 
+                        column(12, img(src='whySolarise.png', height = "auto", width = "100%", 
                                        top = 20, bottom = 20, align = "center"))),
                       fluidRow(column(12, div(style = "height:10px;")))
                                ),
