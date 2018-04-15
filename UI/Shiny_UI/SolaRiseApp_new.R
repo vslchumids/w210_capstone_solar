@@ -157,7 +157,7 @@ decision <- function(be, i, roi, expect) {
 ui <- fluidPage("",
   #theme = 'agency.css',
   theme = shinytheme("yeti"),
-  titlePanel(title = div("SolaRise Business Optimizer", 
+  titlePanel(windowTitle = "SolaRise", title = div("SolaRise Business Optimizer", 
              img(src='power_solar.png', height = 50, width = 75))),  
   navbarPage(title = '', 
              id="nav",
@@ -192,13 +192,7 @@ ui <- fluidPage("",
                       fluidRow(
                         column(12, img(src='whysolarise.png', height = "auto", width = "100%", 
                                        top = 20, bottom = 20, align = "center"))),
-                      fluidRow(column(12, div(style = "height:10px;"))),
-                      
-
-                      fluidRow(column(12, h4("The SolaRise Team", align = 'center'))),
-                      fluidRow(column(12, h5(a("Vincent Chu",href= 'https://www.linkedin.com/in/vincent-chu-9b23311/'), align = 'center'))),
-                      fluidRow(column(12,h5(a("  Qian Yu  ",href= 'https://www.linkedin.com/in/qyupublic/'), align = 'center'))),
-                      fluidRow(column(12,h5(a(" Eric Yang ",href= 'https://www.linkedin.com/in/eric-yang-5a10646/'), align = 'center')))
+                      fluidRow(column(12, div(style = "height:10px;")))
                                ),
              tabPanel("Our Methodology",
                       fluidRow(
@@ -315,7 +309,7 @@ ui <- fluidPage("",
                                                                        )),
                                  column(12,sliderInput(inputId='roof_slide', label = 'Roof Size (Sq ft)', value = 5000, min=250, max = 10000)),
                                  column(6,sliderInput(inputId='empl_slide', label = '# Employees', value = 25, min=10, max = 100)),
-                                 column(6,sliderInput(inputId='sqft_slide', label = 'Office area (Sq ft)', value = 5000, min=250, max = 10000)),
+                                 column(6,sliderInput(inputId='sqft_slide', label = 'Office Size (Sq ft)', value = 5000, min=250, max = 10000)),
                                  column(6,sliderInput(inputId='weekday_start', label = 'Weekday Start Hour', value = 8, min=0, max = 23)),
                                  column(6,sliderInput(inputId='weekday_total', label = 'Weekday Daily Hours', value = 10, min=0, max = 24)),
                                  column(6,sliderInput(inputId='weekend_start', label = 'Weekend Start Hour', value = 10, min=0, max = 23)),
@@ -496,7 +490,7 @@ server <- function(input,output, session){
             ylim = c(0.0, 1.05),
             beside = TRUE,
             col = c('firebrick', 'darkorange', 'darkolivegreen2'))
-    legend("topright", c("Worst", "Average", "Best"), fill = c('firebrick', 'darkorange', 'darkolivegreen2'))
+    legend("topright", c("Best", "Average", "Worst"), fill = c('darkolivegreen2', 'darkorange', 'firebrick'))
   })
   
   output$pnl = renderTable({ pnl_table(breakeven_T()) })
