@@ -232,7 +232,7 @@ ui <- fluidPage("",
                                         #a("http://www.energy.ca.gov/maps/renewable/building_climate_zones.html", align = "left"))),
                                fluidRow(column(12, div(style = "height:30px;"))),
                                fluidRow(
-                                 column(1, img(src='consumption_data.png', height = "auto", width = "100%", 
+                                 column(1, img(src='consumption_data.png', height = "auto", width = "80%", 
                                         top = 20, bottom = 0, align = "left")), 
                                  column(7, align = 'left',
                                         h3("Consumption Data Source", align = "left"),
@@ -313,8 +313,9 @@ ui <- fluidPage("",
                                                                        "Service" = "service",
                                                                        "Other" = "oth"
                                                                        )),
+                                 column(12,sliderInput(inputId='roof_slide', label = 'Roof Size (Sq ft)', value = 5000, min=250, max = 10000)),
                                  column(6,sliderInput(inputId='empl_slide', label = '# Employees', value = 25, min=10, max = 100)),
-                                 column(6,sliderInput(inputId='sqft_slide', label = 'Square feet', value = 5000, min=250, max = 10000)),
+                                 column(6,sliderInput(inputId='sqft_slide', label = 'Office area (Sq ft)', value = 5000, min=250, max = 10000)),
                                  column(6,sliderInput(inputId='weekday_start', label = 'Weekday Start Hour', value = 8, min=0, max = 23)),
                                  column(6,sliderInput(inputId='weekday_total', label = 'Weekday Daily Hours', value = 10, min=0, max = 24)),
                                  column(6,sliderInput(inputId='weekend_start', label = 'Weekend Start Hour', value = 10, min=0, max = 23)),
@@ -378,7 +379,51 @@ ui <- fluidPage("",
                         fluidRow(column(2, imageOutput("decision_image")),
                                  column(10, h2(textOutput("decision_message"))))
                         )
-               )
+               ),
+             tabPanel(title = "Next Step",
+                        column(2),
+                        column(8, align="center",  
+                               h3("Solar Storage", align = 'center'),
+                               img(src='solar_storage.jpg', height = "auto", width = "70%", top = 20, bottom = 20), 
+                               p(),
+                               p("Solar energy storage is a natural extention of the Solarise project. Currently, Solarise model   
+                                  only consider solar generation during the day and energy consumption during the business operation hours.
+                                  The benefit ond flexibility f solar energy can be further realized with the efficient storage devices.",
+                                 align = 'left'),
+                               h3("Solar Installation Incentive", align="Center"),
+                               img(src='solar_incentive.jpg', height = "auto", width = "80%", top = 20, bottom = 20), 
+                               p("In our current model implementation, we considered a number of solar panel installation incentive. However,
+                                  the data we can currently access are old. The energy polices and the solar incentives are changing frequently 
+                                  based on the market demand and political enviroment. The project can incoorperate newly released solar incetive 
+                                  program information and more accurately perform solar adoption evaluation", align="left")),
+                        column(2)),
+             tabPanel(title = "Out Team",
+                      fluidRow(column(12, div(style = "height:100px;"))),
+                      fluidRow(
+                        column(4, align='center',
+                               tags$img(src='eric.jpeg', height = "250", width = "auto", class = "img-fluid rounded_circle",
+                                      top = 20, bottom = 20, align = "center"),  
+                               h4("Eric Yang"),
+                               a(
+                                 icon(name = "linkedin", class="fa-3x", lib = "font-awesome"), 
+                                 href= 'https://www.linkedin.com/in/eric-yang-5a10646/')),
+                        
+                        column(4, align='center',
+                               img(src='qian.jpg', height = "250", width = "auto", 
+                                      top = 20, bottom = 20, align = "center"),  
+                               h4("Qian Yu"),
+                               a(
+                                 icon(name = "linkedin", class="fa-3x", lib = "font-awesome"), 
+                                 href= 'https://www.linkedin.com/in/qyupublic/')),
+                        column(4, align='center',
+                               img(src='vchu.png', height = "250", width = "auto", 
+                                      top = 20, bottom = 20, align = "center"),  
+                               h4("Vincent Chu"),
+                               a(
+                                 icon(name = "linkedin", class="fa-3x", lib = "font-awesome"), 
+                                 href= 'https://www.linkedin.com/in/vincent-chu-9b23311/'))
+                      )
+                     )
   )
 )
 
@@ -499,6 +544,8 @@ server <- function(input,output, session){
   })
   office_size <- reactive({ input$sqft_slide 
   })
+  roof_size <- reactive({ input$roof_slide 
+  })
   weekday_start <- reactive({ input$weekday_start 
   })
   weekday_hours <- reactive({ input$weekday_total 
@@ -519,8 +566,8 @@ server <- function(input,output, session){
   output$BusinessAttri = renderTable({
     setNames( 
       data.frame(  
-        c("Climate Zone", "Employee Size", "Office Size", "weekday_hours", "weekend_hours", "Consumption", ""),  
-        c(nearest_station(stations, points())[1], employee_count(), office_size(), weekday_hours(), 
+        c("Climate Zone", "Employee Size", "Office Size (Sq Ft)", "Roof Size (Sq Ft)", "weekday_hours", "weekend_hours", "Consumption", ""),  
+        c(nearest_station(stations, points())[1], employee_count(), office_size(), roof_size(), weekday_hours(), 
           weekend_hours(), toString(consumption1()), toString(consumption2()))
         ),
       c("Business Information", "Values")
@@ -532,6 +579,7 @@ server <- function(input,output, session){
           "biz_type=", toString(biz_type()),
           "&employee_count=", toString(employee_count()),
           "&office_size=", toString(office_size()),
+          "&roof_size=", toString(roof_size()),
           "&weekday_start=", toString(weekday_start()),
           "&weekday_hours=", toString(weekday_hours()),
           "&weekend_start=", toString(weekend_start()),
