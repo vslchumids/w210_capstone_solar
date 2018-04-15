@@ -153,8 +153,7 @@ ui <- fluidPage("",
              id="nav",
              #theme = 'agency.css',
              tabPanel(title = "About",
-                      fluidRow(
-                        column(12, img(src='AboutPrimary.jpg', height = "auto", width = "100%", 
+                      fluidRow(column(12,img(src='AboutPrimary.jpg', height = "auto", width = "100%", 
                                        top = 20, bottom = 20, align = "center"))), 
                       fluidRow(column(12, h2("What You Need to Know", align = 'center'))),
                       # fluidRow(column(2, img(src='sun.jpg', height = "auto", width = "auto", 
@@ -193,7 +192,7 @@ ui <- fluidPage("",
                       fluidRow(
                         column(2, img(src='consump.jpg', height = "auto", width = "70%", 
                                       top = 20, bottom = 20, align = "right")), 
-                        column(10, h3("How Do My Consunmption Pattern Impact Savings?", align = 'left'),
+                        column(10, h3("How Do My Consumption Pattern Impact Savings?", align = 'left'),
                                p("Provide us the specifics for your business and we estimate the your current and future  energy 
                                  consumption needs."))),                      
                       fluidRow(column(12, div(style = "height:40px;"))),
@@ -207,7 +206,7 @@ ui <- fluidPage("",
                       fluidRow(
                         column(12, img(src='whysolarise.jpg', height = "auto", width = "100%", 
                                        top = 20, bottom = 20, align = "center"))),
-                      fluidRow(column(12, div(style = "height:40px;")))
+                      fluidRow(column(12, div(style = "height:10px;"))),
                       
                       
                       
@@ -220,9 +219,13 @@ ui <- fluidPage("",
                       #          br("Go to", strong('Detailed Report => Business Report'), "for detailed business related ")
                       #          )),
                       # fluidRow(column(12, div(style = "height:100px;")))
+                      fluidRow(column(12, h4("The SolaRise Team", align = 'center'))),
+                      fluidRow(column(12, h5(a("Vincent Chu",href= 'https://www.linkedin.com/in/vincent-chu-9b23311/'), align = 'center'))),
+                      fluidRow(column(12,h5(a("  Qian Yu  ",href= 'https://www.linkedin.com/in/qyupublic/'), align = 'center'))),
+                      fluidRow(column(12,h5(a(" Eric Yang ",href= 'https://www.linkedin.com/in/eric-yang-5a10646/'), align = 'center')))
                                ),
              tabPanel("Our Methodology"), 
-             tabPanel("Tell us Your Business", 
+             tabPanel("Your Business", 
                 
                       #Input Panel
                       column(4, 
@@ -319,8 +322,7 @@ ui <- fluidPage("",
                         fluidRow(column(2, imageOutput("decision_image")),
                                  column(10, h2(textOutput("decision_message"))))
                         )
-               ),
-             tabPanel("Our Team") 
+               )
   )
 )
 
