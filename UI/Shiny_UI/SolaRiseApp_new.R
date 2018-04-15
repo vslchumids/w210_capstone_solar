@@ -132,14 +132,24 @@ roi_cal <- function(be, i) {
   finance
 }
 
-decision <- function(be, expect) {
+roi <- function(be, i) {
+  npv_rev = NPV(i = i, cf0 = be$Saving[1], cf = be$Saving[2:11], time = be$Year[2:11])
+  npv_cost = NPV(i = i, cf0 = be$Cost[1], cf = be$Cost[2:11], time = be$Year[2:11])
+  npv = npv_rev - npv_cost
+  roi = npv_rev / npv_cost
+  roi
+}
+
+decision <- function(be, i, roi, expect) {
   be_year = be$Year[match(0, be$Cashflow)]
-  if (be_year <= expect) {
+  roi_to_compare = roi(be, i)
+  if ((be_year <= expect) && (roi_to_compare >= roi)) {
     text = paste("YES, Solar Panel Installation Meets Your Investment Objectives")
   } else {
     text = paste("NO, Solar Panel Install Does Not Meet Your Investment Objectives")
   }
 }
+
 #------------
 # UI Section
 #------------
@@ -224,7 +234,75 @@ ui <- fluidPage("",
                       fluidRow(column(12,h5(a("  Qian Yu  ",href= 'https://www.linkedin.com/in/qyupublic/'), align = 'center'))),
                       fluidRow(column(12,h5(a(" Eric Yang ",href= 'https://www.linkedin.com/in/eric-yang-5a10646/'), align = 'center')))
                                ),
-             tabPanel("Our Methodology"), 
+             tabPanel("Our Methodology",
+                      fluidRow(
+                        column(2),
+                        column(8, align="center", 
+                               h2("Data Science for Business Decision", align = 'center'),
+                               p(),
+                               p("Solarise's product philosophy focus on using data science and machine learning for better 
+                                 business decision making. User inputs combined with data from external sources are feed into mutliple
+                                 stage of machine learning models to forecast solar potential, energy consumptions, and business
+                                 scenarios. The final model produces an optimized muti-year cach flow of the solar panel investment. 
+                                 User can futher adjust key finacial parameters before a final decision", align = 'left'),
+                               p(),
+                               img(src='ds_decision.png', height = "auto", width = "80%",  top = 20, bottom = 20), 
+                               h4("Design Methodology", align="center")),
+                        column(2)),
+                      fluidRow(column(12, div(style = "height:50px;"))),
+                      fluidRow(
+                        column(2),
+                        column(8, align="center",  
+                               h2("Data Source", align = 'center'), 
+                               fluidRow(
+                                 column(1, img(src='weather_data.png', height = "auto", width = "100%", 
+                                        top = 20, bottom = 0, align = "left")), 
+                                 column(7, align = 'left',
+                                        h3("Weather Data source", align = "left"),
+                                        p("NOAA's National Solar Radiation Data Base ", align = "left"),
+                                        a("https://www1.ncdc.noaa.gov/", align = "left"),
+                                        fluidRow(column(7, div(style = "height:10px;"))),
+                                        p("California Energy Commission", align = "left"),
+                                        a("http://www.energy.ca.gov/maps/renewable/building_climate_zones.html", align = "left"))),
+                               fluidRow(column(12, div(style = "height:30px;"))),
+                               fluidRow(
+                                 column(1, img(src='consumption_data.png', height = "auto", width = "100%", 
+                                        top = 20, bottom = 0, align = "left")), 
+                                 column(7, 
+                                        h3("Consumption Data source", align = "left")))),
+                        column(2)),
+                      fluidRow(column(12, div(style = "height:50px;"))),
+                      fluidRow(
+                        column(2),
+                        column(8, align="center",  
+                               h2("Model Interaction", align = 'center'),
+                               p(),
+                               p("There are a number models interact with each other in our design. Here are some details:", align = "left"),
+                               h3("Solar Generation:", align="left"),
+                               p("We use weather station data of california to build a clustering model. It outputs a list of climate regions 
+                                  of california; Within each climate region, we build time series models of solar irradiance to forecast and                                      generalize the regions annual solar potential. Then Based on user input address, we can use geo location 
+                                  model to calculate the lattitude and longitude, determine the climate region the address belongs to, and 
+                                  project its solar potential.", align = 'left'),
+                               h3("Energy Consumption:", align="left"),
+                               p("We use national commercial building energy consumption data to build an OLS regression model. Based on 
+                                 user input in business type, size, building features, and operation hours, we can predict a consumption
+                                 pattern for the business", align="left"),
+                               h3("Optimization:", align="left"),
+                               p("Lastly, we feed both solar generation potential, consumption pattern, and other constrains to 
+                                 an linear progarmming model for optimization. This final model will produce an ideal cachflow
+                                 based on the given information", align="left"),
+                               p(), 
+                               img(src='models_inter.png', height = "auto", width = "90%", top = 20, bottom = 20), 
+                               h4("Model Interaction", align="center")),
+                        column(2)),
+                      fluidRow(column(12, div(style = "height:50px;"))),
+                      fluidRow(
+                        column(2),
+                        column(8, align="center", 
+                                      h2("Core Optimization Model", align = 'center'),
+                                      img(src='optimization.png', height = "auto", width = "90%", top = 20, bottom = 20)), 
+                        column(2))
+                      ), 
              tabPanel("Your Business", 
                 
                       #Input Panel
@@ -265,17 +343,17 @@ ui <- fluidPage("",
                                  column(6,sliderInput(inputId='weekend_start', label = 'Weekend Start Hour', value = 10, min=0, max = 23)),
                                  column(6,sliderInput(inputId='weekend_total', label = 'Weekend Daily Hours', value = 12, min=0, max = 24)),                                  
                                  column(6,checkboxGroupInput(inputId='consump_check', label = 'Check All That Apply', 
-                                                             selected = 'Electric Cool', 
+                                                             selected = 'Electric_Cool', 
                                                              choices = c('Open 24' = 'Open_24', 
                                                                          'Electric Heat' = 'Electric_Heat', 
                                                                          'Electric Cool' = 'Electric_Cool'))),
                                  column(6,checkboxGroupInput(inputId='consump_check_2', label = NULL, 
                                                              selected = "Refridgeration",
-                                                             choices = c('Open Weekend' = 'Open Wkd',
-                                                                         'Electric Cook' = 'Electric Cook',
+                                                             choices = c('Open Weekend' = 'Open_Wkd',
+                                                                         'Electric Cook' = 'Electric_Cook',
                                                                          'Refridgeration' = 'Refridgeration',
                                                                          'Electic Manufacture' = 'Electric Manufacture'))),
-                                  actionButton("detail", "Detailed Report")
+                                  actionButton("detail", "Go to Report")
                                  )),
                       column(8, leafletOutput("map", height = 900),
                              absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
@@ -283,7 +361,7 @@ ui <- fluidPage("",
                                            width = 200, height = "auto",
                                            plotOutput("spi.hist", height = 250)))
                       ),
-             tabPanel(title = "Detailed Report",
+             tabPanel(title = "Solarise Report",
                       column(4, 
                         wellPanel(style = "position:fixed;", id = "controls", class = "panel panel-default", fixed = TRUE, 
                                       draggable = FALSE, left = "auto", right = "auto", bottom = "auto",
@@ -293,8 +371,10 @@ ui <- fluidPage("",
                                                                      c("Monthly Average" = "Monthly Average", 
                                                                        "Weekly Average" = "Weekly Average")),
                                   h4("Discount Rate", align = 'center'),
-                                  sliderInput(inputId='discount_slide', label = 'Discount (%)', value = 8, min=4, max = 12),
-                                  h4("Expected Payback Period", align = 'center'),
+                                  sliderInput(inputId='discount_slide', label = 'Discount (%)', value = 8, step=0.5, min=4, max = 12),
+                                  h4("Target ROI", align = 'center'),
+                                  sliderInput(inputId='roi_slide', label = 'ROI', value = 2, step = 0.1, min=1, max = 5),
+                                  h4("Target Payback Period", align = 'center'),
                                   sliderInput(inputId='payback_slide', label = 'Years', value = 5, min=2, max = 10)
                         )),
                       column(8,
@@ -306,8 +386,7 @@ ui <- fluidPage("",
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("Business Summary", align = 'left'),
                         fluidRow(
-                          column(12, tableOutput("BusinessAttri")),
-                          column(12, textOutput("http"))
+                          column(12, tableOutput("BusinessAttri"))
                           ),
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("ROI Analysis", align = 'left'),
@@ -359,7 +438,7 @@ server <- function(input,output, session){
                                                                                                        output = 'more')$postal_code)),]$Density})
   
   observeEvent(input$detail, {
-    updateNavbarPage(session = session, inputId='nav', selected = 'Detailed Report')
+    updateNavbarPage(session = session, inputId='nav', selected = 'Solarise Report')
   })
   
   #-------Map Visualization
@@ -419,11 +498,24 @@ server <- function(input,output, session){
             legend.text = element_text(size = 12))
   })
   
-  output$spi.hist <- renderPlot({if (input$go==0) {qplot(subdat$Density,geom="histogram", binwidth = 0.0275,xlab = 'Mean SPI',ylab = 'Zipcode Count',
-                                      fill=I("lightsteelblue1")) + theme_light()+ theme(text=element_text(size=8,  family="Arial")) +labs(caption="SPI: Definition")}
-                                 else {qplot(subdat$Density,geom="histogram", binwidth = 0.0275,xlab = 'Mean SPI',ylab = 'Zipcode Count',
-                                             fill=I("lightsteelblue1")) + theme_light()+ theme(text=element_text(size=8,  family="Arial")) +labs(caption="SPI: Definition") + geom_vline(xintercept = zip.spi(), linetype="dotted", 
-                                                                                                                                                        color = "red", size=3)}}) 
+  output$spi.hist <- renderPlot({
+    if (input$go==0)  {
+      qplot(subdat$Density, geom="histogram", 
+           binwidth = 0.0175, xlab = 'Mean SPI',
+           ylab = 'Zipcode Count', main = 'Mean SPI Histogram', 
+           fill=I("lightsteelblue1")) + 
+      theme_light() + 
+      theme(text=element_text(size=8,  family="Arial")) + 
+      labs(caption="SPI: Definition")} 
+    else {
+      qplot(subdat$Density, geom="histogram", 
+            binwidth = 0.0275, xlab = 'Mean SPI', 
+            ylab = 'Zipcode Count', main = 'Mean SPI Histogram', 
+            fill=I("lightsteelblue1")) + 
+        theme_light()+ 
+        theme(text=element_text(size=8,  family="Arial")) +
+        labs(caption="SPI: Definition") + 
+        geom_vline(xintercept = zip.spi(), linetype="dashed", color = "red", size=1.5)}}) 
                                         
                                         
                                         
@@ -457,7 +549,7 @@ server <- function(input,output, session){
       data.frame(  
         c("Climate Zone", "Employee Size", "Office Size", "weekday_hours", "weekend_hours", "Consumption", ""),  
         c(nearest_station(stations, points())[1], employee_count(), office_size(), weekday_hours(), 
-          weekend_hours(), consumption1(), consumption2())
+          weekend_hours(), toString(consumption1()), toString(consumption2()))
         ),
       c("Business Information", "Values")
       )
@@ -478,11 +570,12 @@ server <- function(input,output, session){
   })
   
   output$decision_message = renderText({ 
-    decision(decision_T(), input$payback_slide)
+    decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide)
   })
 
-   output$decision_image = renderImage({list(src = if (str_detect(decision(decision_T(), input$payback_slide), 'YES')) {'check.jpg'} else {'xbox.jpg'},
-                                             contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
+   output$decision_image = renderImage({
+     list(src = if (str_detect(decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide), 'YES')) {
+       'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
   }
 
 shinyApp(ui=ui, server=server)
