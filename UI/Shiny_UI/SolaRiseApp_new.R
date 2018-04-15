@@ -110,6 +110,15 @@ read_http <- function(http) {
   break_even 
 }
 
+consum_http <- function(http) {
+  pg = read_html(http)
+  body_text = pg %>% html_nodes("body") %>% html_text()
+  text = fromJSON(body_text)
+  
+  sum(melt(text$con[1])[1])
+  
+}
+
 pnl_plot <- function(break_even) {
   melted_breakeven = setNames(melt(break_even, id = 'Year'), c('Year', 'PnL', 'value'))
   melted_breakeven
@@ -357,6 +366,7 @@ ui <- fluidPage("",
                           column(12, plotOutput("SPI", height = 400))),  
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("Business Summary", align = 'left'),
+                        h5(textOutput("consump_total"), align = 'left'),
                         fluidRow(
                           column(12, tableOutput("BusinessAttri"))
                           ),
@@ -374,24 +384,24 @@ ui <- fluidPage("",
                                  column(10, h2(textOutput("decision_message"))))
                         )
                ),
-             tabPanel(title = "Next Step",
+             tabPanel(title = "Next Steps",
                         column(2),
                         column(8, align="center",  
                                h3("Solar Storage", align = 'center'),
                                img(src='solar_storage.jpg', height = "auto", width = "70%", top = 20, bottom = 20), 
                                p(),
-                               p("Solar energy storage is a natural extention of the Solarise project. Currently, Solarise model   
-                                  only consider solar generation during the day and energy consumption during the business operation hours.
-                                  The benefit ond flexibility f solar energy can be further realized with the efficient storage devices.",
+                               p("Solar energy storage is a natural extention of the Solarise project. Currently, the Solarise model   
+                                  only considers solar generation during the day and energy consumption during the business operation hours.
+                                  The benefit and flexibility of solar energy can be further realized with the addition of efficient storage devices.",
                                  align = 'left'),
                                h3("Solar Installation Incentive", align="Center"),
                                img(src='solar_incentive.jpg', height = "auto", width = "80%", top = 20, bottom = 20), 
-                               p("In our current model implementation, we considered a number of solar panel installation incentive. However,
-                                  the data we can currently access are old. The energy polices and the solar incentives are changing frequently 
-                                  based on the market demand and political enviroment. The project can incoorperate newly released solar incetive 
-                                  program information and more accurately perform solar adoption evaluation", align="left")),
+                               p("In our current model implementation, we considered a number of solar panel installation incentives. However,
+                                  the data we can currently access are static. The energy polices and the solar incentives are changing frequently 
+                                  based on market demand and the political enviroment. Future enhancdments would incoorperate newly released solar incetive 
+                                  programs and more accurately estimate the financial impact.", align="left")),
                         column(2)),
-             tabPanel(title = "Out Team",
+             tabPanel(title = "Our Team",
                       fluidRow(column(12, div(style = "height:100px;"))),
                       fluidRow(
                         column(4, align='center',
@@ -590,6 +600,8 @@ server <- function(input,output, session){
    output$decision_image = renderImage({
      list(src = if (str_detect(decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide), 'YES')) {
        'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
+   
+   output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(http)), ' kW')})
   }
 
 shinyApp(ui=ui, server=server)
