@@ -131,12 +131,12 @@ collect_params <- function(station,
   params_final
 }
 
-read_http <- function(http) {
-  pg = read_html(http)
-  body_text = pg %>% html_nodes("body") %>% html_text()
-  json_data = fromJSON(body_text)
-  json_data
-}
+# read_http <- function(http) {
+#   pg = read_html(http)
+#   body_text = pg %>% html_nodes("body") %>% html_text()
+#   json_data = fromJSON(body_text)
+#   json_data
+# }
 
 break_even_df <- function(json_data) {
   cost = c(json_data$cost, 1000)
@@ -528,10 +528,17 @@ server <- function(input,output, session){
                    consumption1(),
                    consumption2()) 
   })
-  breakeven_P <- eventReactive(input$detail, {break_even_df(read_http(http()))})
-  breakeven_T <- eventReactive(input$detail, {break_even_df(read_http(http()))})
-  roi_T <- eventReactive(input$detail, {break_even_df(read_http(http()))})
-  decision_T <- eventReactive(input$detail, {break_even_df(read_http(http()))})
+  
+  read_http <-eventReactive(input$detail,{    
+    pg = read_html(http())
+    body_text = pg %>% html_nodes("body") %>% html_text()
+    json_data = fromJSON(body_text)
+    json_data})
+  
+  breakeven_P <- eventReactive(input$detail, {break_even_df(read_http())})
+  breakeven_T <- eventReactive(input$detail, {break_even_df(read_http())})
+  roi_T <- eventReactive(input$detail, {break_even_df(read_http())})
+  decision_T <- eventReactive(input$detail, {break_even_df(read_http())})
   
   
   #rev.zip <- eventReactive(input$go, {revgeocode(as.numeric(geocode(input$Address)),output = 'more')$postal_code})
@@ -641,8 +648,8 @@ server <- function(input,output, session){
      list(src = if (str_detect(decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide), 'YES')) {
        'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
    
-   output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http(http()))), ' kW')})
-   output$gen_total = renderText({paste('Annual Generation Estimate: ', round(gen_http(read_http(http()))), ' kW')})
+   output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http())), ' kW')})
+   output$gen_total = renderText({paste('Annual Generation Estimate: ', round(gen_http(read_http())), ' kW')})
    
    }
 
