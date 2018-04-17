@@ -481,7 +481,7 @@ server <- function(input,output, session){
 #<<<<<<< HEAD
       setView(if(input$go==0) {lng = -116.4179} else {points()},if(input$go==0) {lat = 36.7783} else {points()}, if(input$go==0) {zoom = 6} else {zoom=11}) %>% 
       addMarkers(if(input$go==0) {lng = 116.3636} else {points()[,1]},if(input$go==0) {lat = 39.91} else {points()[,2]}) %>% 
-      leaflet::addLegend(pal=pal,value = subdat$Density, opacity = 0.7, title = "Mean SPI", position = "topright")
+      leaflet::addLegend(pal=pal,value = subdat$Density, opacity = 0.7, title = "Solar Potential Index", position = "topright")
       
   })
   
@@ -522,20 +522,18 @@ server <- function(input,output, session){
   output$spi.hist <- renderPlot({
     if (input$go==0)  {
       qplot(subdat$Density, geom="histogram", 
-           binwidth = 0.0275, xlab = 'Mean SPI',
-           ylab = 'Zipcode Count', main = 'Mean SPI Histogram', 
+           binwidth = 0.0275, xlab = 'Solar Potential Index',
+           ylab = 'Zipcode Count', main = 'SPI Histogram', 
            fill=I("lightsteelblue1")) + 
       theme_light() + 
-      theme(text=element_text(size=10,  family="Arial")) + 
-      labs(caption="SPI: Definition")} 
+      theme(text=element_text(size=10,  family="Arial"))} 
     else {
       qplot(subdat$Density, geom="histogram", 
-            binwidth = 0.0275, xlab = 'Mean SPI', 
-            ylab = 'Zipcode Count', main = 'Mean SPI Histogram', 
+            binwidth = 0.0275, xlab = 'Solar Potential Index', 
+            ylab = 'Zipcode Count', main = 'SPI Histogram', 
             fill=I("lightsteelblue1")) + 
         theme_light()+ 
         theme(text=element_text(size=10,  family="Arial")) +
-        labs(caption="SPI: Definition") + 
         geom_vline(xintercept = zip.spi(), linetype="dashed", color = "red", size=1.5)}}) 
                                         
                                         
