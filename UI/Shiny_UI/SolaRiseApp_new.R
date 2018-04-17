@@ -152,7 +152,7 @@ break_even_df <- function(json_data) {
 }
 
 consum_http <- function(json_data) {
-  sum(json_data$cons)/12.0
+  sum(json_data$cons)/10.0
 }
 
 pnl_plot <- function(break_even) {
