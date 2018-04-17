@@ -155,6 +155,10 @@ consum_http <- function(json_data) {
   sum(json_data$cons)/10.0
 }
 
+gen_http <- function(json_data) {
+  sum(json_data$gen)/10.0
+}
+
 pnl_plot <- function(break_even) {
   melted_breakeven = setNames(melt(break_even, id = 'Year'), c('Year', 'PnL', 'value'))
   melted_breakeven
@@ -403,6 +407,7 @@ ui <- fluidPage("",
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("Business Summary", align = 'left'),
                         h5(textOutput("consump_total"), align = 'left'),
+                        h5(textOutput("gen_total"), align = 'left'),
                         fluidRow(
                           column(12, tableOutput("BusinessAttri")),
                           column(12, textOutput("HTTP"))
@@ -637,6 +642,10 @@ server <- function(input,output, session){
        'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
    
    output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http(http()))), ' kW')})
-  }
+   output$gen_total = renderText({paste('Annual Generation Estimate: ', round(gen_http(read_http(http()))), ' kW')})
+   
+   }
+
+
 
 shinyApp(ui=ui, server=server)
