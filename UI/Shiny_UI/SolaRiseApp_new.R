@@ -93,13 +93,54 @@ plot_label <- function(station_id, plot_type) {
 }
 
 # HTTP Interface
-http = 'http://flask-env.migvx8ame2.us-west-2.elasticbeanstalk.com/solarise?biz=warehouse&wkrs=80&sqft=10000'
+add_eq <- function(x) {
+  paste("&", x, "=Y", sep = "")
+}
+
+process_params <- function(params) {
+  params_l = strsplit(params, ", ")
+  params_y = unlist(lapply(params_l, add_eq))
+  result = paste(params_y, collapse='')
+  result
+}
+
+collect_params <- function(station,
+                           biz_type, 
+                           employee_count, 
+                           roof_size,
+                           office_size, 
+                           weekday_start,
+                           weekday_hours,
+                           weekend_start,
+                           weekend_hours,
+                           consumption1,
+                           consumption2 ) {
+  params_final = paste("http://solarise.7bsuxv7th2.us-west-2.elasticbeanstalk.com/solarise?",
+                       "station=", toString(station),
+                       "&biz=", toString(biz_type),
+                       "&wkrs=", toString(employee_count),
+                       "&sqft=", toString(office_size),
+                       "&roof=", toString(roof_size),                 
+                       "&wd_st=", toString(weekday_start),
+                       "&wd_hrs=",toString(weekday_hours),
+                       "&we_st=", toString(weekend_start),
+                       "&we_hrs=",toString(weekend_hours),
+                       process_params(toString(consumption1)),
+                       process_params(toString(consumption2)), 
+                       sep = "")
+  params_final
+}
+
 read_http <- function(http) {
   pg = read_html(http)
   body_text = pg %>% html_nodes("body") %>% html_text()
-  text = fromJSON(body_text)
-  cost = c(text$cost, 1000)
-  saving = c(0, text$saving)
+  json_data = fromJSON(body_text)
+  json_data
+}
+
+break_even_df <- function(json_data) {
+  cost = c(json_data$cost, 1000)
+  saving = c(0, json_data$saving)
   cashflow = saving - cost
   # Break Even DF
   break_even = setNames(data.frame(
@@ -110,13 +151,8 @@ read_http <- function(http) {
   break_even 
 }
 
-consum_http <- function(http) {
-  pg = read_html(http)
-  body_text = pg %>% html_nodes("body") %>% html_text()
-  text = fromJSON(body_text)
-  
-  sum(melt(text$con[1])[1])
-  
+consum_http <- function(json_data) {
+  sum(json_data$cons)/12.0
 }
 
 pnl_plot <- function(break_even) {
@@ -324,16 +360,16 @@ ui <- fluidPage("",
                                  column(6,sliderInput(inputId='weekend_start', label = 'Weekend Start Hour', value = 10, min=0, max = 23)),
                                  column(6,sliderInput(inputId='weekend_total', label = 'Weekend Daily Hours', value = 12, min=0, max = 24)),                                  
                                  column(6,checkboxGroupInput(inputId='consump_check', label = 'Check All That Apply', 
-                                                             selected = 'Electric_Cool', 
-                                                             choices = c('Open 24' = 'Open_24', 
-                                                                         'Electric Heat' = 'Electric_Heat', 
-                                                                         'Electric Cool' = 'Electric_Cool'))),
+                                                             selected = 'elec_Cool', 
+                                                             choices = c('Open 24' = 'open_24', 
+                                                                         'Electric Heat' = 'elec_Heat', 
+                                                                         'Electric Cool' = 'elec_Cool'))),
                                  column(6,checkboxGroupInput(inputId='consump_check_2', label = NULL, 
-                                                             selected = "Refridgeration",
-                                                             choices = c('Open Weekend' = 'Open_Wkd',
-                                                                         'Electric Cook' = 'Electric_Cook',
-                                                                         'Refridgeration' = 'Refridgeration',
-                                                                         'Electic Manufacture' = 'Electric Manufacture'))),
+                                                             selected = "refridg",
+                                                             choices = c('Open Weekend' = 'open_wkend',
+                                                                         'Electric Cook' = 'elec_cook',
+                                                                         'Refridgeration' = 'refridg',
+                                                                         'Electic Manufacture' = 'ele_mfg'))),
                                   actionButton("detail", "Go to Report")
                                  )),
                       column(8, leafletOutput("map", height = 900),
@@ -368,7 +404,8 @@ ui <- fluidPage("",
                         h4("Business Summary", align = 'left'),
                         h5(textOutput("consump_total"), align = 'left'),
                         fluidRow(
-                          column(12, tableOutput("BusinessAttri"))
+                          column(12, tableOutput("BusinessAttri")),
+                          column(12, textOutput("HTTP"))
                           ),
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("ROI Analysis", align = 'left'),
@@ -444,12 +481,52 @@ server <- function(input,output, session){
   bins <- c(0.40, 0.43, 0.46, 0.48, 0.51, 0.54, 0.57, 0.59, 0.62)
   pal <- colorBin("RdYlGn", domain = subdat$Density, bins = bins)
 
+  #------Business Attribute
+  biz_type <- reactive({ input$biz_select
+  })
+  employee_count <- reactive({ input$empl_slide 
+  })
+  office_size <- reactive({ input$sqft_slide 
+  })
+  roof_size <- reactive({ input$roof_slide 
+  })
+  weekday_start <- reactive({ input$weekday_start 
+  })
+  weekday_hours <- reactive({ input$weekday_total 
+  })
+  weekend_start <- reactive({ input$weekend_start 
+  })
+  weekend_hours <- reactive({ input$weekend_total 
+  })
+  consumption1 <- reactive({ input$consump_check 
+  })
+  consumption2 <- reactive({ input$consump_check_2 
+  })
+  discount <- reactive({ input$discount_slide 
+  })
+  payback <- reactive({ input$payback_slide 
+  })
+  
+  
   #-----Map Search
   points <- eventReactive(input$go, {geocode(input$Address, output='latlon', source = "dsk")})
-  breakeven_P <- eventReactive(input$detail, {read_http(http)})
-  breakeven_T <- eventReactive(input$detail, {read_http(http)})
-  roi_T <- eventReactive(input$detail, {read_http(http)})
-  decision_T <- eventReactive(input$detail, {read_http(http)})
+  http <- eventReactive(input$detail, {
+    collect_params(nearest_station(stations, points())[2],
+                   biz_type(), 
+                   employee_count(), 
+                   roof_size(), 
+                   office_size(), 
+                   weekday_start(),
+                   weekday_hours(),
+                   weekend_start(),
+                   weekend_hours(),
+                   consumption1(),
+                   consumption2()) 
+  })
+  breakeven_P <- eventReactive(input$detail, {break_even_df(read_http(http()))})
+  breakeven_T <- eventReactive(input$detail, {break_even_df(read_http(http()))})
+  roi_T <- eventReactive(input$detail, {break_even_df(read_http(http()))})
+  decision_T <- eventReactive(input$detail, {break_even_df(read_http(http()))})
   
   
   #rev.zip <- eventReactive(input$go, {revgeocode(as.numeric(geocode(input$Address)),output = 'more')$postal_code})
@@ -536,35 +613,6 @@ server <- function(input,output, session){
         theme(text=element_text(size=10,  family="Arial")) +
         geom_vline(xintercept = zip.spi(), linetype="dashed", color = "red", size=1.5)}}) 
                                         
-                                        
-                                        
-  
-#------Business Attribute
-  biz_type <- reactive({ input$biz_select
-  })
-  employee_count <- reactive({ input$empl_slide 
-  })
-  office_size <- reactive({ input$sqft_slide 
-  })
-  roof_size <- reactive({ input$roof_slide 
-  })
-  weekday_start <- reactive({ input$weekday_start 
-  })
-  weekday_hours <- reactive({ input$weekday_total 
-  })
-  weekend_start <- reactive({ input$weekend_start 
-  })
-  weekend_hours <- reactive({ input$weekend_total 
-  })
-  consumption1 <- reactive({ input$consump_check 
-  })
-  consumption2 <- reactive({ input$consump_check_2 
-  })
-  discount <- reactive({ input$discount_slide 
-  })
-  payback <- reactive({ input$payback_slide 
-  })
-  
   output$BusinessAttri = renderTable({
     setNames( 
       data.frame(  
@@ -576,19 +624,8 @@ server <- function(input,output, session){
       )
   })
   
-  output$http = renderText({ 
-    paste("http://flask-env.migvx8ame2.us-west-2.elasticbeanstalk.com/solarise?",
-          "biz_type=", toString(biz_type()),
-          "&employee_count=", toString(employee_count()),
-          "&office_size=", toString(office_size()),
-          "&roof_size=", toString(roof_size()),
-          "&weekday_start=", toString(weekday_start()),
-          "&weekday_hours=", toString(weekday_hours()),
-          "&weekend_start=", toString(weekend_start()),
-          "&weekend_hours=", toString(weekend_hours()),
-          "&consumption1=", toString(consumption1()),
-          "&consumption2=", toString(consumption2()),
-          sep = "")
+  output$HTTP = renderText({ 
+    http()
   })
   
   output$decision_message = renderText({ 
@@ -599,7 +636,7 @@ server <- function(input,output, session){
      list(src = if (str_detect(decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide), 'YES')) {
        'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
    
-   output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(http)), ' kW')})
+   output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http(http()))), ' kW')})
   }
 
 shinyApp(ui=ui, server=server)
