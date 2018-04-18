@@ -5,4 +5,4 @@ Vincent Chu
 Eric Yang
 Qian Yu
 
-Project Management: https://tree.taiga.io/project/vslchumids-solarise
+gosolarise.com
