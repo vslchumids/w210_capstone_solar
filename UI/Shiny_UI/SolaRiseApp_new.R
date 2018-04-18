@@ -412,11 +412,12 @@ ui <- fluidPage("",
                           column(12, plotOutput("SPI", height = 400))),  
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("Business Summary", align = 'left'),
-                        h5(textOutput("consump_total"), align = 'left'),
-                        h5(textOutput("gen_total"), align = 'left'),
+                        #h5(textOutput("consump_total"), align = 'left'),
+                        #h5(textOutput("gen_total"), align = 'left'),
                         fluidRow(
-                          column(12, tableOutput("BusinessAttri")),
-                          column(12, textOutput("HTTP"))
+                          column(4, tableOutput("BusinessAttri")),
+                          column(4, plotOutput("kw", height =250))
+                          #column(12, textOutput("HTTP"))
                           ),
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("ROI Analysis", align = 'left'),
@@ -595,7 +596,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(1)
+        Sys.sleep(0.1)
       }
     })
     barplot(plot_data(nearest_station(stations, points())[2], input$spi_plot), 
@@ -608,8 +609,8 @@ server <- function(input,output, session){
             cex.axis = 0.8,
             ylim = c(0.0, 1.05),
             beside = TRUE,
-            col = c('firebrick', 'darkorange', 'darkolivegreen2'))
-    legend("topright", c("Best", "Average", "Worst"), fill = c('darkolivegreen2', 'darkorange', 'firebrick'))
+            col = c("dodgerblue", "blue", "navy"))
+    legend("topright", c("Worst","Average","Best"), fill = c("dodgerblue", "blue", "navy"))
   })
   
   output$pnl = renderTable({ 
@@ -624,7 +625,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(1)
+        Sys.sleep(0.1)
       }
     })
     pnl_table(breakeven_T()) })
@@ -641,7 +642,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(1)
+        Sys.sleep(0.005)
       }
     })
     roi_cal(roi_T(), input$discount_slide * 0.01) })
@@ -658,7 +659,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(1)
+        Sys.sleep(0.005)
       }
     })
     ggplot(pnl_plot(breakeven_P()), aes(x=Year, y = value, color = PnL)) + 
@@ -717,7 +718,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(0.5)
+        Sys.sleep(0.005)
       }
     })
     decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide)
@@ -727,8 +728,20 @@ server <- function(input,output, session){
      list(src = if (str_detect(decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide), 'YES')) {
        'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
    
-   output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http())), ' kW')})
-   output$gen_total = renderText({paste('Annual Generation Estimate: ', round(gen_http(read_http())), ' kW')})
+   #output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http())), ' kW')})
+   #output$gen_total = renderText({paste('Annual Generation Estimate: ', round(gen_http(read_http())), ' kW')})
+   
+   output$kw = renderPlot({
+     x <- data.frame(kilowatts = c(round(consum_http(read_http())),round(gen_http(read_http()))), type = c('consumption', 'generation'))
+     
+     ggplot(data=x, aes(x=type, y=kilowatts)) +
+       geom_bar(stat="identity", fill= c("green3", "darkgreen"))+
+       geom_text(aes(label=kilowatts), vjust=1.6, color="white",
+                 position = position_dodge(0.9), size=3.5) + ggtitle("Average Yearly Energy Profile") + theme_minimal()
+     
+     # barplot(c(gen_http(read_http()),consum_http(read_http())),
+     #         names.arg = c('Generation', 'Consumption'), main = 'Average Yearly Energy Profile', col=c("green","red"), xlab = 'kilowatts')
+   })
    
    }
 
