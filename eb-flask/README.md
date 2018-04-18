@@ -1,10 +1,10 @@
 # SolaRise Optimization Model API
 
-##URL
+## URL
 
 http://solarise.7bsuxv7th2.us-west-2.elasticbeanstalk.com/solarise?
 
-##Params:
+## Params:
 
 	station: [required] Weather Station (derived from Address in R Shiny layer)
 
