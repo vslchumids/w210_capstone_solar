@@ -203,7 +203,7 @@ breakeven_plot <- function(break_even) {
 }
 
 be_table <- function(breakeven) {
-  breakeven_T = setNames(cbind(c("Accum_Saving", "Accum_Cost", "Accum_Profit"), transpose(breakeven[2:4])), 
+  breakeven_T = setNames(cbind(c("Accum_Saving", "Accum_Depreciation", "Accum_Profit"), transpose(breakeven[2:4])), 
                          c("Depreciation", "Year 1", "Year 2", "Year 3", "Year 4", 
                            "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"))
   breakeven_T
@@ -238,7 +238,18 @@ roi <- function(be, i) {
 }
 
 decision <- function(cf, be, i, roi, expect) {
-  be_year = be$Year[be$Accum_Profit >= 0][1]
+  be_year_first = be$Year[be$Accum_Profit >= 0][1]
+  be_year_second = be$Year[be$Accum_Profit >= 0][2]
+  if (be_year_first == 1) {
+    if (be$Accum_Profit[2] > 0) {
+      be_year = be_year_first
+    } else {
+      be_year = be_year_second
+    }
+  } else { 
+    be_year = be_year_first
+  } 
+    
   roi_to_compare = roi(cf, i)
   if ((be_year <= expect) && (roi_to_compare >= roi)) {
     text = paste("YES, Solar Panel Installation Meets Your Investment Objectives")
