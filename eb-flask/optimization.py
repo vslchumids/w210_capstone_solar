@@ -27,6 +27,10 @@ start_year = 2018
 num_years = 10 
 file_path = "data/ols_usable.csv" # path in AWS EB EC2 (eb-flask)
 
+panels_per_kw = 5
+annual_clean_cost_per_panel = 15.
+annual_inspection_cost = 150.
+
 #########################################################################################
 # Functions
 #########################################################################################
@@ -139,6 +143,37 @@ def get_gen_cost_dict(num_years,
             
     return gen_cost_dict
 
+def get_annual_inspection_cost_dict(num_years, 
+                                    ann_insp_cost = annual_inspection_cost):
+    
+    inspection_cost_dict = {}
+    k = 1
+    for i in range(num_years):    
+        for j in range(12):
+            if j == 0:
+                inspection_cost_dict[k] = ann_insp_cost
+            else:
+                inspection_cost_dict[k] = 0
+            k = k + 1
+            
+    return inspection_cost_dict
+
+def get_annual_cleaning_cost_by_kw_dict(num_years, 
+                                        clean_cost_panel = annual_clean_cost_per_panel, 
+                                        num_panels_per_kw = panels_per_kw):
+    
+    cleaning_cost_dict = {}
+    k = 1
+    for i in range(num_years):    
+        for j in range(12):
+            if j == 0 and i > 0:
+                cleaning_cost_dict[k] = clean_cost_panel * num_panels_per_kw
+            else:
+                cleaning_cost_dict[k] = 0
+            k = k + 1
+            
+    return cleaning_cost_dict
+
 #========================================================================================
 # Define Rules for Objective
 #========================================================================================
@@ -147,17 +182,22 @@ def day_nem_tou(model):
     return sum(model.gen_factor[i] * model.x[i] - model.cons_day[i] for i in model.month_ind) * model.nem
     
 def night_tou(model):
-    return sum(model.cons_night[i] for i in model.month_ind) * model.tou
+    return sum(model.cons_night[i] * model.tou_dict[i] for i in model.month_ind)
 
 def gen_costs(model):
     return sum(model.gen_factor[i] * model.x[i] * model.gen_cost[i] for i in model.month_ind)
 
 def system_costs(model):
     return sum((model.x[i] - model.x[i - 1]) * model.system_cost for i in range(2, 121)) + model.x[1] * model.system_cost
+    
+def inpection_costs(model):
+    return sum(model.inpect_cost[i] for i in model.month_ind)
+
+def cleaning_costs(model):
+    return sum(model.clean_cost_per_kw[i] * model.x[i] for i in model.month_ind)
 
 def roi_rule(model):
-    return day_nem_tou(model) - system_costs(model) - gen_costs(model)
-    #return day_nem_tou(model) - system_costs(model) - gen_costs(model) - night_tou(model)
+    return day_nem_tou(model) - system_costs(model) - gen_costs(model) - inpection_costs(model) - cleaning_costs(model)
 
 #========================================================================================
 # Define Rules for Constraints
@@ -214,30 +254,35 @@ def create_model_parameters(model,
                             cook = 0, 
                             rfrd = 0,
                             manu = 0, 
-                            water = 0, # not included in UI 
-                            elvr = 0, # not included in UI
-                            escl = 0, # not included in UI
+                            water = 0, # not included in UI, default to 0 
+                            elvr = 0, # not included in UI, default to 0
+                            escl = 0, # not included in UI, default to 0
                             file_path = file_path):
     # roof size
     model.roof_sqft = Param(model.month_ind, default=roof_sqft)
 
-    # Variable system cost -- initial cost for fixing roof and setting up solar systems
-    model.system_cost = Param(default=3750.) # cost per KW 
+    # Variable system cost per KW -- initial cost for setting up the solar system
+    model.system_cost = Param(default=3750.) 
 
-    # Sample financing parameters: (10, 0.162, 0.01)
-    gen_cost_dict = get_gen_cost_dict(10, 0., 0.)
+    # Sample financing parameters: (num_years, 0.162, 0.01)
+    gen_cost_dict = get_gen_cost_dict(num_years, 0., 0.)
     model.gen_cost = Param(model.month_ind, within=NonNegativeReals, initialize=gen_cost_dict) # per KWh
 
-    # Variable consumption cost
-    model.tou = Param(default=0.29361) # per KWh
-    model.tou_on_peak = Param(default=0.33661) # per KWh 
-    model.tou_off_peak = Param(default=0.25061) # per KWh 
+    # Variable consumption cost per KWh
+    model.tou = Param(default=0.29361) 
+    # model.tou_on_peak = Param(default=0.33661) 
+    # model.tou_off_peak = Param(default=0.25061) 
+    model.tou_dict = get_gen_cost_dict(num_years, 0.29361, 0.01)
 
-    # Variable generation credit
+    # Variable generation credit per KWh
     model.nem = Param(default=0.29361) # per KWh
     model.nem_on_peak = Param(default=0.33661) # per KWh 
     model.nem_off_peak = Param(default=0.25061) # per KWh 
 
+    # Maintenance costs
+    model.inpect_cost = get_annual_inspection_cost_dict(num_years = num_years)
+    model.clean_cost_per_kw = get_annual_cleaning_cost_by_kw_dict(num_years = num_years)
+    
     # Incentive
     incent, cap = get_incentive_at_station(station_id = station_id)
     if incent != None and cap != None:
@@ -382,9 +427,9 @@ def output_json(params, instance):
         temp_cons = value(instance.cons_day[i])
         temp_gen = value(instance.gen_factor[i]) * value(instance.x[i])
         if temp_cons < temp_gen:
-            savings[i - 1] = temp_cons * value(instance.tou_off_peak) + (temp_gen - temp_cons) * value(instance.nem)
+            savings[i - 1] = temp_cons * value(instance.tou_dict[i]) + (temp_gen - temp_cons) * value(instance.nem)
         else:
-            savings[i - 1] = temp_gen * value(instance.tou_off_peak)
+            savings[i - 1] = temp_gen * value(instance.tou_dict[i])
           
     # Calculate incentive
     incentive = max(value(instance.incentive_per_kw) * value(instance.x[1]), value(instance.incentive_cap))
@@ -414,10 +459,12 @@ def output_json(params, instance):
         "cons": [value(instance.cons_day[i]) + value(instance.cons_night[i]) for i in range(1, 121)], 
         "gen": [value(instance.gen_factor[i]) * value(instance.x[i]) for i in range(1, 121)], 
         "init_cost": value(instance.x[1]) * value(instance.system_cost) * -1, 
+        "inspection_cost": [value(instance.inpect_cost[i]) for i in range(1, 121)],
+        "cleaning_cost": [value(instance.clean_cost_per_kw[i]) * value(instance.x[i]) for i in range(1, 121)],
         "saving": savings, 
         "incentive": incentive
-    }
-    
+    }                            
+                                 
     return json.dumps(data)
 
 def run_model_api(params, 
