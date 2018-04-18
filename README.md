@@ -2,7 +2,9 @@
 Repo for MIDS W210 Capstone - Solar Project
 
 Vincent Chu
+
 Eric Yang
+
 Qian Yu
 
-gosolarise.com
+http://gosolarise.com
