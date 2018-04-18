@@ -8,9 +8,11 @@ import date_time_util
 import pandas as pd
 
 from optimization import run_model_api, create_model, run_model, system_costs, gen_costs, day_nem_tou, gen_kwh, gen_kwh_by_month_ind
-# import optimization
 
-# some bits of text for the page.
+#########################################################################################
+# Globals
+#########################################################################################
+
 header_text = '''
     <html>\n<head> <title>SolaRise</title> </head>\n<body>'''
 instructions = '''
@@ -25,10 +27,8 @@ image_link = '<img src="https://i.pinimg.com/originals/6f/22/00/6f2200e9c33ab043
 # Functions
 #########################################################################################
 
-# List of business type input to the Consumption model
-# ["Vacant", "Office", "Laboratory", "Nonrefrigerated warehouse", "Food sales", "Public order and safety", "Outpatient health care", "Refrigerated warehouse", 
-# "Religious worship", "Public assembly", "Education", "Food service", "Inpatient health care", "Nursing", "Lodging", "Strip shopping mall", "Enclosed mall", 
-# "Retail other than mall", "Service", "Other"]
+# Map business type values passed to the api from the R Shint front end
+# to business type inputs to the consumption model
 def map_biz_type_to_model_input(biz, refridg):
     model_biz_type = None
 
@@ -54,7 +54,7 @@ def map_biz_type_to_model_input(biz, refridg):
     elif biz in ("ConvenienceStore", "conv"):
         model_biz_type = "Food sales"
     elif biz in ("ReligiousWorship", "reli"):
-        model_biz_type = "Public assembly" #"Religious worship"
+        model_biz_type = "Public assembly" 
     elif biz in ("OutpatientHealth", "out_health"):
         model_biz_type = "Outpatient health care"
     elif biz in ("InpatientHealth", "in_health"):
@@ -74,25 +74,27 @@ def map_biz_type_to_model_input(biz, refridg):
 
     return model_biz_type
 
-# http://flask-env.migvx8ame2.us-west-2.elasticbeanstalk.com/solarise?
-# station=690150& -- Weather Station (derived from Address in R Shiny layer)
-# biz=ofc& -- Business Type -- replace space with underscore
-# roof=5000& -- Roof Size
-# wkrs=25& -- # Employees
-# sqft=5000& -- Office Size
-# wd_st=8& -- Weekday Start Hours
-# wd_hrs=10& -- Weekday Daily Hours
-# we_st=10& -- Weekend Start Hours
-# we_hrs=10& -- Weekend Daily Hours
-# open_24=Y& -- Open 24
-# elec_heat=Y& -- Electric Heat
-# elec_cool=Y& -- Electric Cool
-# open_wkend=Y& -- Open Weekend
-# elec_cook=Y& -- Eectric Cook
-# refridg=Y& -- Refridgeration
-# elec_mfg=Y -- Electic Manufacture
+# Get parameters passed to the solarise api hosted at 
+# http://solarise.7bsuxv7th2.us-west-2.elasticbeanstalk.com/solarise?
+# 
+# Parameters:
+#   station: [required] Weather Station (derived from Address in R Shiny layer)
+#   biz: [required] Business Type (please remove spaces between words)
+#   roof: [required] Roof Size (Sq ft)
+#   wkrs: [required] # Employees
+#   sqft: [required] office Size (Sq ft)
+#   wd_st: Weekday Start Hours
+#   wd_hrs: Weekday Daily Hours
+#   we_st: Weekend Start Hours
+#   we_hrs: Weekend Daily Hours
+#   open_24: Open 24 (=Y if checked; omitted if unchecked)
+#   elec_heat: Electric Heat (=Y if checked; omitted if unchecked)
+#   elec_cool: Electric Cool (=Y if checked; omitted if unchecked)
+#   open_wkend: Open Weekend (=Y if checked; omitted if unchecked)
+#   elec_cook: Eectric Cook (=Y if checked; omitted if unchecked)
+#   refridg: Refridgeration (=Y if checked; omitted if unchecked)
+#   elec_mfg: Electic Manufacture (=Y if checked; omitted if unchecked)
 def get_solarise_params():
-    # TO-DO: assign default values when params are not available
     params = {}
 
     if 'station' in request.args:
@@ -177,12 +179,14 @@ def get_solarise_params():
 
     return params
 
+# Transform the checkbox parameter values to binaries
 def transform_checkbox_param_to_binary(checkbox_param):
     if checkbox_param == 'Y':
         return 1
     else:
         return 0
 
+# Transform parameters passed to the solarise api
 def get_transformed_solarise_params():
     params = get_solarise_params()
 
@@ -200,11 +204,12 @@ def get_transformed_solarise_params():
 
     return params
 
+# Run optimization model and return JSON with model results
 def solar_rec(params):
     json_output = run_model_api(params)
     return json_output
 
-# print a nice greeting.
+# Print a hello greeting
 def say_hello(username = "World"):
     return '<p>Hello %s!</p>\n' % username
 
@@ -215,10 +220,7 @@ def say_hello(username = "World"):
 # EB looks for an 'application' callable by default.
 application = Flask(__name__)
 
-# "Hello World" Demo
-# add a rule for the index page.
-# application.add_url_rule('/', 'index', (lambda: header_text +
-#     say_hello() + solar_rec() + instructions + footer_text))
+# Rule for the index page (Hello World demo)
 @application.route('/')
 def api_index():
     if 'name' in request.args:
@@ -226,32 +228,17 @@ def api_index():
     else:    
         return header_text + instructions + solarise_link + footer_text
 
-# For testing
-@application.route('/meow')
-def api_meow():
-    if 'name' in request.args:
-        if request.args['name'].lower() == 'carmen':
-            return "Meow Meow Lo Por Chai" + "<br>" + image_link
-        else:    
-            return 'Meow Meow ' + request.args['name']
-    else:
-        return 'Meow Vincent'
-
-# add a rule when the page is accessed with a name appended to the site
-# URL.
-# application.add_url_rule('/<username>', 'hello', (lambda username: header_text + solar_rec() + home_link + footer_text if username == 'solarise' else header_text + say_hello(username) + home_link + footer_text))
-# application.add_url_rule('/<username>', 'hello', (lambda username: solar_rec() if username == 'solarise' else header_text + say_hello(username) + home_link + footer_text))
+# Rule for the solarise page
 @application.route('/solarise')
 def api_solarise():
-    params = get_transformed_solarise_params() #get_solarise_params()
+    params = get_transformed_solarise_params() 
     return solar_rec(params)
-    #return solar_rec(params['station'], params['biz'], params['wkrs'], params['sqft'], params['refridg'])
 
 #########################################################################################
 # Main
 #########################################################################################
 
-# run the app.
+# Run the app
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.

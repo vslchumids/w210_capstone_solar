@@ -23,37 +23,13 @@ from incentive import get_incentive_at_station
 
 # Max KW per square feet of roof top space
 kw_per_sqft = 0.015
-
-######################################################################################### 
-# Placeholders
-#########################################################################################
-
-# weather_station_id = 690150
-# business_type = "Office"
-# sqft = 1000
-# num_workers = 10
-# wkhrs = 40
-# heat = 0 # checkbox
-# cook = 0 # checkbox
-# cool = 0 # checkbox
-# manu = 0 # checkbox
-# water = 0 # checkbox ## not on UI
-# elvr = 0 # checkbox ## not on UI
-# escl = 0 # checkbox ## not on UI
-# opn24 = 0 # checkbox # 
-# rfrd = 0 # checkbox
-# opnwe = 0 # checkbox 
-# operating_hours = [8., 8., 8., 8., 8., 0., 0.] # slider
-
-start_year = 2018 # set as constant for now
-num_years = 10 # set as constant for now
+start_year = 2018 
+num_years = 10 
 file_path = "data/ols_usable.csv" # path in AWS EB EC2 (eb-flask)
 
 #########################################################################################
 # Functions
 #########################################################################################
-
-# Utility functions
 
 #========================================================================================
 # Compile data into list or dictionary to initialize model params
@@ -227,7 +203,6 @@ def create_model_parameters(model,
                             sqft,
                             start_year,
                             num_years,
-                            #wkhrs=40,### calculated
                             wd_start_hr = 8, 
                             wd_work_hrs = 10,
                             we_start_hr = 10, 
@@ -242,28 +217,26 @@ def create_model_parameters(model,
                             water = 0, # not included in UI 
                             elvr = 0, # not included in UI
                             escl = 0, # not included in UI
-                            #operating_hours=[8., 8., 8., 8., 8., 0., 0.] ### calculated
                             file_path = file_path):
     # roof size
     model.roof_sqft = Param(model.month_ind, default=roof_sqft)
 
-    # Variable system cost -- initial cost for set up and fixing roof
-    model.system_cost = Param(default=3750.) # cost per KW -- original = 3750.
+    # Variable system cost -- initial cost for fixing roof and setting up solar systems
+    model.system_cost = Param(default=3750.) # cost per KW 
 
-    # Only if system is fully or partly financed
-    #gen_cost_dict = get_gen_cost_dict(10, 0.162, 0.01)
+    # Sample financing parameters: (10, 0.162, 0.01)
     gen_cost_dict = get_gen_cost_dict(10, 0., 0.)
     model.gen_cost = Param(model.month_ind, within=NonNegativeReals, initialize=gen_cost_dict) # per KWh
 
     # Variable consumption cost
     model.tou = Param(default=0.29361) # per KWh
-    model.tou_on_peak = Param(default=0.33661) # per KWh -- not used for now
-    model.tou_off_peak = Param(default=0.25061) # per KWh -- not used for now
+    model.tou_on_peak = Param(default=0.33661) # per KWh 
+    model.tou_off_peak = Param(default=0.25061) # per KWh 
 
     # Variable generation credit
     model.nem = Param(default=0.29361) # per KWh
-    model.nem_on_peak = Param(default=0.33661) # per KWh -- not used for now
-    model.nem_off_peak = Param(default=0.25061) # per KWh -- not used for now
+    model.nem_on_peak = Param(default=0.33661) # per KWh 
+    model.nem_off_peak = Param(default=0.25061) # per KWh 
 
     # Incentive
     incent, cap = get_incentive_at_station(station_id = station_id)
@@ -427,13 +400,6 @@ def output_json(params, instance):
         'wd_hrs': params['wd_hrs'],
         'we_st': params['we_st'],
         'we_hrs': params['we_hrs'],        
-#         'open_24': params['open_24'],
-#         'elec_heat': params['elec_heat'],
-#         'elec_cool': params['elec_cool'],
-#         'open_wkend': params['open_wkend'],
-#         'elec_cook': params['elec_cook'],
-#         'refridg': params['refridg'],
-#         'elec_mfg': params['elec_mfg'],
         'biz_input': params['biz_input'],
         'open_24_input': params['open_24_input'],
         'elec_heat_input': params['elec_heat_input'],
@@ -442,17 +408,14 @@ def output_json(params, instance):
         'elec_cook_input': params['elec_cook_input'], 
         'refridg_input': params['refridg_input'], 
         'elec_mfg_input': params['elec_mfg_input'],
-#         'total_net_savings': value(instance.savings), 
         "rec_cap": [value(instance.x[i]) for i in range(1, 121)], 
         "cons_day": [value(instance.cons_day[i]) for i in range(1, 121)], 
         "cons_night": [value(instance.cons_night[i]) for i in range(1, 121)],         
         "cons": [value(instance.cons_day[i]) + value(instance.cons_night[i]) for i in range(1, 121)], 
         "gen": [value(instance.gen_factor[i]) * value(instance.x[i]) for i in range(1, 121)], 
-#         "cost": costs, 
         "init_cost": value(instance.x[1]) * value(instance.system_cost) * -1, 
         "saving": savings, 
         "incentive": incentive
-#         "saving": [(value(instance.gen_factor[i]) * value(instance.x[i]) - value(instance.cons_day[i])) * value(instance.nem) for i in range(1, 121)]
     }
     
     return json.dumps(data)
