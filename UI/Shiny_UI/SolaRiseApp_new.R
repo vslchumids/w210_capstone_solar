@@ -660,7 +660,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(0.1)
+        Sys.sleep(0.01)
       }
     })
     be_table(breakeven_T()) })
