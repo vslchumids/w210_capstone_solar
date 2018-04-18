@@ -141,24 +141,16 @@ break_even_df <- function(json_data) {
   start = seq(1, 120, by = 12)
   end = seq(12, 120, by = 12)
   saving = numeric()
-  maintain = numeric()
   for (year in 1:10){
     saving[year] = sum(json_data$saving[start[year]:end[year]])
-    maintain[year] = -1 * (sum(json_data$cleaning_cost[start[year]:end[year]]) + sum(json_data$inspection_cost[start[year]:end[year]]))
   }
   cost = json_data$init_cost + json_data$incentive
   cost_dep = cost * c(0.2, 0.32, 0.192, 0.1152, 0.1152, 0.0576, 0.0, 0.0, 0.0, 0.0)
-  total_cost = cost_dep + maintain
-  profit = saving + total_cost
-  # Cumsum
-  saving_cs = cumsum(saving)
-  cost_cs = cumsum(total_cost)
-  profit_cs = cumsum(profit)
-  
+  profit = saving + cost_dep
   breakeven = setNames(data.frame(
     c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-    saving_cs, cost_cs, profit_cs),
-    c('Year', 'Accum_Saving', 'Accum_Cost', 'Accum_Profit')
+    saving, cost_dep, profit),
+    c('Year', 'Saving', 'Depreciated_cost', 'Profit')
   )
   breakeven 
 }
@@ -167,20 +159,17 @@ cash_flow_df <- function(json_data) {
   start = seq(1, 120, by = 12)
   end = seq(12, 120, by = 12)
   saving = numeric()
-  maintain = numeric()
   cost = json_data$init_cost + json_data$incentive
   for (year in 1:10){
     saving[year] = sum(json_data$saving[start[year]:end[year]])
-    maintain[year] = -1 * (sum(json_data$cleaning_cost[start[year]:end[year]]) + sum(json_data$inspection_cost[start[year]:end[year]]))
   }
   cost = c(cost, rep(0, 10))
   saving = c(0, saving)
-  maintain = c(0, maintain)
-  cashflow = saving + cost + maintain
+  cashflow = saving + cost
   cash_flow = setNames(data.frame(
     c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-    saving, cost, maintain, cashflow),
-    c('Year', 'Saving', 'Fixed_Cost', 'Maintenance_Cost', 'Cashflow')
+    saving, cost, cashflow),
+    c('Year', 'Saving', 'Cost', 'Cashflow')
   )
   cash_flow 
 }
@@ -193,24 +182,20 @@ gen_http <- function(json_data) {
   sum(json_data$gen)/10.0
 }
 
-opt_http <- function(json_data) {
-  sum(json_data$rec_cap)/120
-}
-
 breakeven_plot <- function(break_even) {
   melted_breakeven = setNames(melt(break_even, id = 'Year'), c('Year', 'Labels', 'value'))
   melted_breakeven
 }
 
 be_table <- function(breakeven) {
-  breakeven_T = setNames(cbind(c("Accum_Saving", "Accum_Cost", "Accum_Profit"), transpose(breakeven[2:4])), 
+  breakeven_T = setNames(cbind(c("Saving", "Depreciated Cost", "Profit"), transpose(breakeven[2:4])), 
                          c("Depreciation", "Year 1", "Year 2", "Year 3", "Year 4", 
                            "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"))
   breakeven_T
 } 
 
 pnl_table <- function(cashflow) {
-  cashflow_T = setNames(cbind(c("Saving", "Fixed_Cost", "Maintenance_Cost", "Cashflow"), transpose(cashflow[2:5])), 
+  cashflow_T = setNames(cbind(c("Saving", "Cost", "Cashflow"), transpose(cashflow[2:4])), 
                          c("Profit_&_Loss", "Year 0", "Year 1", "Year 2", "Year 3", "Year 4", 
                            "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"))
   cashflow_T
@@ -218,9 +203,7 @@ pnl_table <- function(cashflow) {
 
 roi_cal <- function(be, i) {
   npv_rev = NPV(i = i, cf0 = be$Saving[1], cf = be$Saving[2:11], time = be$Year[2:11])
-  npv_fixed_cost = NPV(i = i, cf0 = be$Fixed_Cost[1], cf = be$Fixed_Cost[2:11], time = be$Year[2:11])
-  npv_maintain_cost = NPV(i = i, cf0 = be$Maintenance_Cost[1], cf = be$Maintenance_Cost[2:11], time = be$Year[2:11])
-  npv_cost = npv_fixed_cost + npv_maintain_cost
+  npv_cost = NPV(i = i, cf0 = be$Cost[1], cf = be$Cost[2:11], time = be$Year[2:11])
   npv = npv_rev + npv_cost
   roi = abs(npv_rev / npv_cost)
   finance = setNames(data.frame(c('NPV Revenue', 'NPV Cost', 'NPV Cashflow', 'ROI'), c(npv_rev, npv_cost, npv, roi)),
@@ -230,15 +213,13 @@ roi_cal <- function(be, i) {
 
 roi <- function(be, i) {
   npv_rev = NPV(i = i, cf0 = be$Saving[1], cf = be$Saving[2:11], time = be$Year[2:11])
-  npv_fixed_cost = NPV(i = i, cf0 = be$Fixed_Cost[1], cf = be$Fixed_Cost[2:11], time = be$Year[2:11])
-  npv_maintain_cost = NPV(i = i, cf0 = be$Maintenance_Cost[1], cf = be$Maintenance_Cost[2:11], time = be$Year[2:11])
-  npv_cost = npv_fixed_cost + npv_maintain_cost
+  npv_cost = NPV(i = i, cf0 = be$Cost[1], cf = be$Cost[2:11], time = be$Year[2:11])
   roi = abs(npv_rev / npv_cost)
   roi
 }
 
 decision <- function(cf, be, i, roi, expect) {
-  be_year = be$Year[be$Accum_Profit >= 0][1]
+  be_year = be$Year[be$Profit >= 0][1]
   roi_to_compare = roi(cf, i)
   if ((be_year <= expect) && (roi_to_compare >= roi)) {
     text = paste("YES, Solar Panel Installation Meets Your Investment Objectives")
@@ -343,35 +324,14 @@ ui <- fluidPage("",
                       fluidRow(column(12, div(style = "height:50px;"))),
                       fluidRow(
                         column(2),
-                        column(8, align="center", 
-                               h2("Solar Terminology and Depreciation", align = 'center'),
-                               p(),
-                               h4("Solar Potential Index (SPI)", align = 'left'),
-                               tags$li("SPI = average(global horizontal irradiance) / Max(global horizontal irradiance) * cos(solar zenith angle)", align = 'left'),
-                               tags$li("Unit: a ratio between 0 and 1", align = 'left'),
-                               img(src='zenith.jpg', height = "auto", width = "40%",  top = 20, bottom = 20), 
-                               p(),
-                               tags$li("Solar Generation (kilowatt) = SPI * installed capacity", align = 'left'),
-                               h4("Solar System Cost Depreciation", align="left"),
-                               tags$li("Commercial solar energy system qualify for accelerated depreciation under IRS MACRS schedule", align = 'left'),
-                               tags$li("MACRS is a way for businesses to achieve a partial tax break", align = 'left'),
-                               tags$li("The MACRS cost depreciation rate is defined as", align = 'left'),
-                               img(src='solar_dep.png', height = "auto", width = "20%",  top = 20, bottom = 20) 
-                               ),
-                        
-                        column(2)),
-                      fluidRow(column(12, div(style = "height:50px;"))),
-                      fluidRow(
-                        column(2),
                         column(8, align="center",  
                                h2("Model Interaction", align = 'center'),
                                p(),
                                p("There are a number models that interact with each other in our design. Here are some details:", align = "left"),
                                h3("Solar Generation:", align="left"),
                                p("We utilize California weather station data to build a clustering model. The model outputs a list of climate regions 
-                                 for the state. Within each climate region, we identify the centroid and build a time series forecast for solar irradiance. 
-                                 Using location data we are able to associate any California address with a specific climate region and it's respective 
-                                 future irradiance potential.", align = 'left'),
+                                  for the state. Within each climate region, we identify the centroid and build a time series forecast for solar irradiance. 
+                                  Using location data we are able to associate any California address with a specific climate region and it's respective future irradiance potential.", align = 'left'),
                                h3("Energy Consumption:", align="left"),
                                p("We use national commercial building energy consumption data to build an OLS regression model. Based on 
                                  user input in business type, size, building features, and operation hours, we can predict a consumption
@@ -473,9 +433,8 @@ ui <- fluidPage("",
                           column(12, plotOutput("SPI", height = 400))),  
                         fluidRow(column(12, div(style = "height:50px;"))),
                         h4("Business Summary", align = 'left'),
-                        h3(textOutput("sys_optimal"), align = 'left'),
+                        #h5(textOutput("consump_total"), align = 'left'),
                         #h5(textOutput("gen_total"), align = 'left'),
-                        fluidRow(column(12, div(style = "height:20px;"))),
                         fluidRow(
                           column(4, tableOutput("BusinessAttri")),
                           column(4, plotOutput("kw", height =250))
@@ -513,19 +472,12 @@ ui <- fluidPage("",
                                   only considers solar generation during the day and energy consumption during the business operation hours.
                                   The benefit and flexibility of solar energy can be further realized with the addition of efficient storage devices.",
                                  align = 'left'),
-                               fluidRow(column(12, div(style = "height:50px;"))),
                                h3("Solar Installation Incentive", align="Center"),
                                img(src='solar_incentive.jpg', height = "auto", width = "80%", top = 20, bottom = 20), 
                                p("In our current model implementation, we considered a number of solar panel installation incentives. However,
                                   the data we can currently access are static. The energy polices and the solar incentives are changing frequently 
                                   based on market demand and the political enviroment. Future enhancdments would incoorperate newly released solar incetive 
-                                  programs and more accurately estimate the financial impact.", align="left"),
-                               fluidRow(column(12, div(style = "height:50px;"))),
-                               h3("Continuous Learning of User Consumption Behavior", align="Center"),
-                               img(src='cont_learning.png', height = "auto", width = "70%", top = 20, bottom = 20), 
-                               p("The published business consumption data is very limited in data size and feature richness. Therefore, the consumption regression
-                                 model we built can be improved. As more and more user use the SolaRise tool, we will store, retrain, and 
-                                 further improve the consumption and optimization models", align="left")),
+                                  programs and more accurately estimate the financial impact.", align="left")),
                         column(2)),
              tabPanel(title = "Our Team",
                       fluidRow(column(12, div(style = "height:100px;"))),
@@ -666,7 +618,7 @@ server <- function(input,output, session){
     dat <- data.frame(x = numeric(0), y = numeric(0))
     withProgress(message = 'Creating Solar Potential Plot', value = 0, {
       # Number of times we'll go through the loop
-      n <- 8
+      n <- 10
       
       for (i in 1:n) {
         dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
@@ -703,7 +655,7 @@ server <- function(input,output, session){
         # Increment the progress bar, and update the detail text.
         incProgress(1/n, detail = paste("step", i))
         
-        Sys.sleep(0.01)
+        Sys.sleep(0.1)
       }
     })
     be_table(breakeven_T()) })
@@ -712,7 +664,7 @@ server <- function(input,output, session){
     dat <- data.frame(x = numeric(0), y = numeric(0))
     withProgress(message = 'Building P&L Table', value = 0, {
       # Number of times we'll go through the loop
-      n <- 8
+      n <- 10
       
       for (i in 1:n) {
         dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
@@ -820,7 +772,7 @@ server <- function(input,output, session){
        'check.jpg'} else {'xbox.jpg'}, contentType = 'image/jpeg', width = 100, height = 100)}, deleteFile = FALSE)
    
    #output$consump_total = renderText({paste('Annual Consumption Estimate: ', round(consum_http(read_http())), ' kW')})
-   output$sys_optimal = renderText({paste('Your Optimal System Size is ', opt_http(read_http()), ' KW')})
+   #output$gen_total = renderText({paste('Annual Generation Estimate: ', round(gen_http(read_http())), ' kW')})
    
    output$kw = renderPlot({
      x <- data.frame(kilowatts = c(round(consum_http(read_http())),round(gen_http(read_http()))), type = c('consumption', 'generation'))
