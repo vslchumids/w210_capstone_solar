@@ -15,6 +15,7 @@ import date_time_util
 from consumption import get_monthly_num_workhours_pct, get_monthly_num_days_pct, get_annual_consumption, get_monthly_daily_consumption
 from irradiance import get_spi_by_day, get_spi_by_month, get_gen_factor_by_month
 from date_time_util import get_sun_rise_set_times, get_daylight_hours_by_month, get_daylight_hours_pct_by_month, get_num_work_hrs_per_week, get_num_work_hrs_per_day_of_week
+from incentive import get_incentive_at_station
 
 #########################################################################################
 # Globals
@@ -247,10 +248,11 @@ def create_model_parameters(model,
     model.roof_sqft = Param(model.month_ind, default=roof_sqft)
 
     # Variable system cost -- initial cost for set up and fixing roof
-    model.system_cost = Param(default=0.) # cost per KW -- original = 3750.
+    model.system_cost = Param(default=3750.) # cost per KW -- original = 3750.
 
     # Only if system is fully or partly financed
-    gen_cost_dict = get_gen_cost_dict(10, 0.162, 0.01)
+    #gen_cost_dict = get_gen_cost_dict(10, 0.162, 0.01)
+    gen_cost_dict = get_gen_cost_dict(10, 0., 0.)
     model.gen_cost = Param(model.month_ind, within=NonNegativeReals, initialize=gen_cost_dict) # per KWh
 
     # Variable consumption cost
@@ -263,6 +265,18 @@ def create_model_parameters(model,
     model.nem_on_peak = Param(default=0.33661) # per KWh -- not used for now
     model.nem_off_peak = Param(default=0.25061) # per KWh -- not used for now
 
+    # Incentive
+    incent, cap = get_incentive_at_station(station_id = station_id)
+    if incent != None and cap != None:
+        model.incentive_per_kw = incent
+        model.incentive_cap = cap
+    else:
+        model.incentive_per_kw = 0.
+        model.incentive_cap = 0.    
+        
+    print "From create_model_parameters: incent = %f" % incent
+    print "From create_model_parameters: cap = %f" % cap
+    
     # Convert start hour & work hours by weekday vs. weekend into
     # total number of work hours 
     wkhrs_week = get_num_work_hrs_per_week(wd_work_hrs, we_work_hrs)
@@ -384,6 +398,24 @@ def run_model(model):
     return instance    
 
 def output_json(params, instance):
+    
+    # Calculate cost
+    costs = [value(instance.gen_factor[i] * instance.x[i] * instance.gen_cost[i]) * -1 for i in range(1, 121)]
+    costs[0] = costs[0] - value(instance.system_cost) * value(instance.x[1])
+    
+    # Calculate saving
+    savings = [None] * 120
+    for i in range(1, 121):
+        temp_cons = value(instance.cons_day[i])
+        temp_gen = value(instance.gen_factor[i]) * value(instance.x[i])
+        if temp_cons < temp_gen:
+            savings[i - 1] = temp_cons * value(instance.tou_off_peak) + (temp_gen - temp_cons) * value(instance.nem)
+        else:
+            savings[i - 1] = temp_gen * value(instance.tou_off_peak)
+          
+    # Calculate incentive
+    incentive = max(value(instance.incentive_per_kw) * value(instance.x[1]), value(instance.incentive_cap))
+ 
     # Reiterating the params from the API call
     data = {
         'station': params['station'],
@@ -416,8 +448,11 @@ def output_json(params, instance):
         "cons_night": [value(instance.cons_night[i]) for i in range(1, 121)],         
         "cons": [value(instance.cons_day[i]) + value(instance.cons_night[i]) for i in range(1, 121)], 
         "gen": [value(instance.gen_factor[i]) * value(instance.x[i]) for i in range(1, 121)], 
-        "cost": [value(instance.gen_factor[i] * instance.x[i] * instance.gen_cost[i]) for i in range(1, 121)], 
-        "saving": [(value(instance.gen_factor[i]) * value(instance.x[i]) - value(instance.cons_day[i])) * value(instance.nem) for i in range(1, 121)]
+#         "cost": costs, 
+        "init_cost": value(instance.x[1]) * value(instance.system_cost) * -1, 
+        "saving": savings, 
+        "incentive": incentive
+#         "saving": [(value(instance.gen_factor[i]) * value(instance.x[i]) - value(instance.cons_day[i])) * value(instance.nem) for i in range(1, 121)]
     }
     
     return json.dumps(data)

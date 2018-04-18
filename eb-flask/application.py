@@ -32,32 +32,42 @@ image_link = '<img src="https://i.pinimg.com/originals/6f/22/00/6f2200e9c33ab043
 def map_biz_type_to_model_input(biz, refridg):
     model_biz_type = None
 
-    if biz in ("Office", "Laboratory", "Education", "Lodging", "Service", "Other"):
-        model_biz_type = biz
-    elif biz == "Warehouse":
+    if biz in ("Office", "ofc"):
+        model_biz_type = "Office"
+    elif biz in ("Laboratory", "lab"):
+        model_biz_type = "Laboratory"        
+    elif biz in ("Education", "edu"):
+        model_biz_type = "Education"        
+    elif biz in ("Lodging", "lodge"):
+        model_biz_type = "Lodging"        
+    elif biz in ("Service", "service"):
+        model_biz_type = "Service"        
+    elif biz in ("Other", "oth"):
+        model_biz_type = "Other"
+    elif biz in ("Warehouse", "war"):
         if refridg == "Y":
             model_biz_type = "Refrigerated warehouse"
         else:
             model_biz_type = "Nonrefrigerated warehouse"
-    elif biz == "Restuarant":
+    elif biz in ("Restuarant", "rest"):
         model_biz_type = "Food service"
-    elif biz == "ConvenienceStore":
+    elif biz in ("ConvenienceStore", "conv"):
         model_biz_type = "Food sales"
-    elif biz == "ReligiousWorship":
+    elif biz in ("ReligiousWorship", "reli"):
         model_biz_type = "Public assembly" #"Religious worship"
-    elif biz == "OutpatientHealth":
+    elif biz in ("OutpatientHealth", "out_health"):
         model_biz_type = "Outpatient health care"
-    elif biz == "InpatientHealth":
+    elif biz in ("InpatientHealth", "in_health"):
         model_biz_type = "Inpatient health care"
-    elif biz == "NursingHome":
+    elif biz in ("NursingHome", "nurse"):
         model_biz_type = "Nursing"
-    elif biz == "StripMall":
+    elif biz in ("StripMall", "strip"):
         model_biz_type = "Strip shopping mall"
-    elif biz == "EnclosedMall":
+    elif biz in ("EnclosedMall", "enc_mall"):
         model_biz_type = "Enclosed mall"
-    elif biz == "RetailOther":
+    elif biz in ("RetailOther", "ret_oth"):
         model_biz_type = "Retail other than mall"
-    elif biz == "PublicAssembly": 
+    elif biz in ("PublicAssembly"): 
         model_biz_type = "Public assembly"
     else:
         model_biz_type = "Other"
