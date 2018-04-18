@@ -618,7 +618,7 @@ server <- function(input,output, session){
     dat <- data.frame(x = numeric(0), y = numeric(0))
     withProgress(message = 'Creating Solar Potential Plot', value = 0, {
       # Number of times we'll go through the loop
-      n <- 10
+      n <- 8
       
       for (i in 1:n) {
         dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
@@ -664,7 +664,7 @@ server <- function(input,output, session){
     dat <- data.frame(x = numeric(0), y = numeric(0))
     withProgress(message = 'Building P&L Table', value = 0, {
       # Number of times we'll go through the loop
-      n <- 10
+      n <- 8
       
       for (i in 1:n) {
         dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
