@@ -139,10 +139,16 @@ collect_params <- function(station,
 # }
 
 break_even_df <- function(json_data) {
-  cost = c(json_data$cost, 1000)
-  saving = c(0, json_data$saving)
-  cashflow = saving - cost
-  # Break Even DF
+  start = seq(1, 120, by = 12)
+  end = seq(12, 120, by = 12)
+  saving = numeric()
+  cost = json_data$init_cost
+  for (year in 1:10){
+    saving[year] = sum(json_data$saving[start[year]:end[year]])
+  }
+  cost = c(cost, rep(0, 10))
+  saving = c(0, saving)
+  cashflow = saving + cost
   break_even = setNames(data.frame(
     c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
     saving, cost, cashflow),
@@ -174,7 +180,7 @@ pnl_table <- function(break_even) {
 roi_cal <- function(be, i) {
   npv_rev = NPV(i = i, cf0 = be$Saving[1], cf = be$Saving[2:11], time = be$Year[2:11])
   npv_cost = NPV(i = i, cf0 = be$Cost[1], cf = be$Cost[2:11], time = be$Year[2:11])
-  npv = npv_rev - npv_cost
+  npv = npv_rev + npv_cost
   roi = npv_rev / npv_cost
   finance = setNames(data.frame(c('NPV Revenue', 'NPV Cost', 'NPV Cashflow', 'ROI'), c(npv_rev, npv_cost, npv, roi)),
                      c("Net Present Values", ""))
@@ -578,6 +584,20 @@ server <- function(input,output, session){
   
   output$SPI = renderPlot({
     #par(bg = '#2FA4E7')
+    dat <- data.frame(x = numeric(0), y = numeric(0))
+    withProgress(message = 'Creating Solar Potential Plot', value = 0, {
+      # Number of times we'll go through the loop
+      n <- 10
+      
+      for (i in 1:n) {
+        dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+        
+        # Increment the progress bar, and update the detail text.
+        incProgress(1/n, detail = paste("step", i))
+        
+        Sys.sleep(1)
+      }
+    })
     barplot(plot_data(nearest_station(stations, points())[2], input$spi_plot), 
             names.arg = plot_label(nearest_station(stations, points())[2], input$spi_plot), 
             main = input$spi_plot,
@@ -592,10 +612,55 @@ server <- function(input,output, session){
     legend("topright", c("Best", "Average", "Worst"), fill = c('darkolivegreen2', 'darkorange', 'firebrick'))
   })
   
-  output$pnl = renderTable({ pnl_table(breakeven_T()) })
-  output$roi = renderTable({ roi_cal(roi_T(), input$discount_slide * 0.01) })
+  output$pnl = renderTable({ 
+    dat <- data.frame(x = numeric(0), y = numeric(0))
+    withProgress(message = 'Building P&L Table', value = 0, {
+      # Number of times we'll go through the loop
+      n <- 10
+      
+      for (i in 1:n) {
+        dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+        
+        # Increment the progress bar, and update the detail text.
+        incProgress(1/n, detail = paste("step", i))
+        
+        Sys.sleep(1)
+      }
+    })
+    pnl_table(breakeven_T()) })
+  
+  output$roi = renderTable({
+    dat <- data.frame(x = numeric(0), y = numeric(0))
+    withProgress(message = 'Creating ROI Table', value = 0, {
+      # Number of times we'll go through the loop
+      n <- 10
+      
+      for (i in 1:n) {
+        dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+        
+        # Increment the progress bar, and update the detail text.
+        incProgress(1/n, detail = paste("step", i))
+        
+        Sys.sleep(1)
+      }
+    })
+    roi_cal(roi_T(), input$discount_slide * 0.01) })
   
   output$ROI = renderPlot({
+    dat <- data.frame(x = numeric(0), y = numeric(0))
+    withProgress(message = 'Creating Breakeven Plot', value = 0, {
+      # Number of times we'll go through the loop
+      n <- 10
+      
+      for (i in 1:n) {
+        dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+        
+        # Increment the progress bar, and update the detail text.
+        incProgress(1/n, detail = paste("step", i))
+        
+        Sys.sleep(1)
+      }
+    })
     ggplot(pnl_plot(breakeven_P()), aes(x=Year, y = value, color = PnL)) + 
       geom_line(size = 1.5) + 
       ylab('Dollar ($)') + 
@@ -641,6 +706,20 @@ server <- function(input,output, session){
   })
   
   output$decision_message = renderText({ 
+    dat <- data.frame(x = numeric(0), y = numeric(0))
+    withProgress(message = 'Recommandation...', value = 0, {
+      # Number of times we'll go through the loop
+      n <- 10
+      
+      for (i in 1:n) {
+        dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+        
+        # Increment the progress bar, and update the detail text.
+        incProgress(1/n, detail = paste("step", i))
+        
+        Sys.sleep(0.5)
+      }
+    })
     decision(decision_T(), input$discount_slide * 0.01, input$roi_slide, input$payback_slide)
   })
 
