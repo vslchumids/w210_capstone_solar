@@ -408,7 +408,9 @@ ui <- fluidPage("",
                                  which get fed into the optimization model.  Our optimization algorithm then maximizes net energy savings by considering amount 
                                  of solar energy generation, consumption patterns, installation cost, maintenance costs, etc.  An ideal cashflow and a final 
                                  recommendation on solar adoption will be produced based on results of the model.", align="left"),
-                               img(src='optimization.png', height = "auto", width = "80%", top = 20, bottom = 20)), 
+                               img(src='optimization.png', height = "auto", width = "80%", top = 20, bottom = 20), 
+                               fluidRow(column(12, div(style = "height:50px;"))),
+                               img(src='flow.png', height = "auto", width = "70%", top = 20, bottom = 20)), 
                         column(2))
                       ), 
              tabPanel("Your Business", 
