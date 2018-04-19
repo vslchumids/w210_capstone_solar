@@ -398,9 +398,15 @@ ui <- fluidPage("",
                       fluidRow(column(12, div(style = "height:50px;"))),
                       fluidRow(
                         column(2),
-                        column(8, align="center", 
-                                      h2("Core Optimization Model", align = 'center'),
-                                      img(src='optimization.png', height = "auto", width = "90%", top = 20, bottom = 20)), 
+                        column(8, align="center",  
+                               h2("Core Optimization Model", align = 'center'), 
+                               p("Our optimization model utilizes the GLPK (GNU Linear Programming Kit) solver to determine the most optimal solar system size 
+                                 based on locations and specific characteristics of the businesses as described by our users, such as number of employees, 
+                                 building size, operation hours, etc.  These inputs drive the results of our Solar Irradiance and Energy Consumption models,
+                                 which get fed into the optimization model.  Our optimization algorithm then maximizes net energy savings by considering amount 
+                                 of solar energy generation, consumption patterns, installation cost, maintenance costs, etc.  An ideal cashflow and a final 
+                                 recommendation on solar adoption will be produced based on results of the model.", align="left"),
+                               img(src='optimization.png', height = "auto", width = "80%", top = 20, bottom = 20)), 
                         column(2))
                       ), 
              tabPanel("Your Business", 
